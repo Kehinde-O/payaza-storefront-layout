@@ -1,0 +1,1 @@
+{"version":3,"file":"GenericPageWrapper.d.ts","sourceRoot":"","sources":["../../../../src/layouts/shared/components/GenericPageWrapper.tsx"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,MAAM,mBAAmB,CAAC;AAIhD,UAAU,uBAAuB;IAC/B,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,WAAW,EAAE,WAAW,CAAC;CAC1B;AAED,wBAAgB,kBAAkB,CAAC,EAAE,QAAQ,EAAE,WAAW,EAAE,EAAE,uBAAuB,2CA2BpF"}

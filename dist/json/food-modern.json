@@ -1,0 +1,191 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "food-modern",
+    "name": "Food Modern Layout",
+    "description": "Modern restaurant layout with contemporary design",
+    "totalPages": 8
+  },
+  "home": {
+    "content": [
+      {
+        "type": "FoodHeroModern",
+        "props": {
+          "id": "FoodHeroModern-1",
+          "title": "Welcome to Our Restaurant",
+          "subtitle": "Modern Culinary Experience",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "View Menu",
+            "link": "/menu"
+          }
+        }
+      },
+      {
+        "type": "ChefStoryModern",
+        "props": {
+          "id": "ChefStoryModern-2",
+          "title": "Our Story",
+          "showImage": true,
+          "showSignature": true
+        }
+      },
+      {
+        "type": "MenuGrid",
+        "props": {
+          "id": "MenuGrid-3",
+          "title": "Featured Dishes",
+          "showViewAll": true,
+          "columns": 3
+        }
+      },
+      {
+        "type": "Testimonials",
+        "props": {
+          "id": "Testimonials-4",
+          "title": "Customer Reviews",
+          "showRatings": true,
+          "limit": 3
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "menu": {
+    "content": [
+      {
+        "type": "MenuHeaderModern",
+        "props": {
+          "id": "MenuHeaderModern-0",
+          "title": "Our Menu",
+          "subtitle": "Carefully crafted dishes"
+        }
+      },
+      {
+        "type": "MenuGrid",
+        "props": {
+          "id": "MenuGrid-1",
+          "layout": "modern",
+          "showCategories": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Menu",
+        "pageId": "menu"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "All Products"
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0",
+          "title": "About Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0",
+          "title": "Contact Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  }
+}

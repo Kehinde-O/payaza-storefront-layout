@@ -1,0 +1,273 @@
+'use client';
+
+import { StoreConfig } from '@/lib/store-types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Search, Star, Flame, Leaf, Wheat, Info, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+
+interface MenuPageProps {
+  storeConfig: StoreConfig;
+  categorySlug?: string;
+}
+
+export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
+  const categories = storeConfig.categories || [];
+  const menuItems = storeConfig.menuItems || [];
+  const [selectedCategory, setSelectedCategory] = useState(categorySlug || '');
+  const [searchQuery, setSearchQuery] = useState('');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftGradient, setShowLeftGradient] = useState(false);
+  const [showRightGradient, setShowRightGradient] = useState(true);
+
+  const primaryColor = storeConfig.branding.primaryColor;
+
+  // Icons mapping for dietary info
+  const dietaryIcons: Record<string, React.ElementType> = {
+    'spicy': Flame,
+    'vegan': Leaf,
+    'vegetarian': Leaf,
+    'gluten-free': Wheat,
+    'popular': Star
+  };
+
+  const filteredItems = menuItems.filter(item => {
+    // Category Filter
+    if (selectedCategory) {
+      const category = categories.find(c => c.id === item.categoryId);
+      if (category?.slug !== selectedCategory) return false;
+    }
+
+    // Search Filter
+    if (searchQuery) {
+      return item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+
+    return true;
+  });
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftGradient(scrollLeft > 0);
+      setShowRightGradient(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
+
+  const scrollCategories = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 200;
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Menu Header / Hero */}
+      <div className="relative bg-black text-white py-16 px-4 overflow-hidden">
+        {/* Header background - can be configured via layoutConfig if needed */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+
+        <div className="relative z-10 container mx-auto text-center max-w-4xl">
+          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">Our Menu</h1>
+          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+            Discover our wide range of delicious dishes, crafted with passion and the finest ingredients.
+          </p>
+        </div>
+      </div>
+
+      <div className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm py-4 transition-all border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Search */}
+            <div className="relative w-full md:max-w-xs flex-shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search menu..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-black/5 transition-all shadow-sm"
+              />
+            </div>
+
+            {/* Categories */}
+            <div className="relative flex-1 w-full overflow-hidden group">
+              {/* Scroll Buttons (Desktop) */}
+              <button
+                onClick={() => scrollCategories('left')}
+                className={cn(
+                  "absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-white/90 shadow-md rounded-full flex items-center justify-center text-gray-600 transition-opacity hover:bg-white md:flex hidden",
+                  !showLeftGradient && "opacity-0 pointer-events-none"
+                )}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollCategories('right')}
+                className={cn(
+                  "absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-white/90 shadow-md rounded-full flex items-center justify-center text-gray-600 transition-opacity hover:bg-white md:flex hidden",
+                  !showRightGradient && "opacity-0 pointer-events-none"
+                )}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Gradients for scroll indication */}
+              <div className={cn("absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-gray-50 to-transparent z-0 pointer-events-none transition-opacity", showLeftGradient ? "opacity-100" : "opacity-0")} />
+              <div className={cn("absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-gray-50 to-transparent z-0 pointer-events-none transition-opacity", showRightGradient ? "opacity-100" : "opacity-0")} />
+
+              <div
+                ref={scrollContainerRef}
+                onScroll={checkScroll}
+                className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-1 scroll-smooth"
+              >
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className={cn(
+                    "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border flex-shrink-0 select-none",
+                    !selectedCategory
+                      ? "text-white border-transparent shadow-md transform scale-105"
+                      : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                  )}
+                  style={!selectedCategory ? { backgroundColor: primaryColor } : {}}
+                >
+                  All Items
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.slug)}
+                    className={cn(
+                      "px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border flex-shrink-0 select-none",
+                      selectedCategory === category.slug
+                        ? "text-white border-transparent shadow-md transform scale-105"
+                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                    )}
+                    style={selectedCategory === category.slug ? { backgroundColor: primaryColor } : {}}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Category Title Display */}
+        {selectedCategory && (
+          <div className="mb-8 animate-fade-in">
+            <h2 className="text-2xl font-bold text-gray-900 capitalize flex items-center gap-3">
+              {categories.find(c => c.slug === selectedCategory)?.name || 'Category'}
+              <span className="text-sm font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                {filteredItems.length} items
+              </span>
+            </h2>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {filteredItems.map((item, index) => (
+            <Card key={item.id} className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-gray-100 flex flex-col h-full bg-white rounded-2xl">
+              <div className="relative aspect-[4/3] overflow-hidden">
+                <ImageWithFallback
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  skeletonAspectRatio="4/3"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-6">
+                  <Button
+                    className="rounded-full font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300"
+                    style={{ backgroundColor: primaryColor, color: 'white' }}
+                  >
+                    Quick Add
+                  </Button>
+                </div>
+                {/* Popular Badge if applicable (mock logic) */}
+                {index % 3 === 0 && (
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> Popular
+                  </div>
+                )}
+              </div>
+
+              <CardContent className="p-6 flex-1 flex flex-col">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="font-bold text-lg text-gray-900 leading-tight">{item.name}</h3>
+                  <span className="font-black text-lg text-gray-900 whitespace-nowrap ml-2">{formatCurrency(item.price, (item as any).currency || storeConfig.settings?.currency || 'USD')}</span>
+                </div>
+
+                <p className="text-gray-500 text-sm mb-4 line-clamp-2 leading-relaxed flex-1">{item.description}</p>
+
+                {item.dietaryInfo && item.dietaryInfo.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {item.dietaryInfo.map((info) => {
+                      const Icon = dietaryIcons[info.toLowerCase()] || Info;
+                      return (
+                        <span
+                          key={info}
+                          className="inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-1 rounded bg-gray-50 text-gray-500 border border-gray-100"
+                        >
+                          <Icon className="w-3 h-3" />
+                          {info}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <Button
+                  className="w-full rounded-xl font-bold h-11 shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+                  style={{
+                    backgroundColor: 'black',
+                    color: 'white',
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {filteredItems.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No items found</h3>
+            <p className="text-gray-500">
+              Try adjusting your search or category filter.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-6"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('');
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,303 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "electronics",
+    "name": "Electronics Layout",
+    "description": "Electronics and tech products layout",
+    "totalPages": 10
+  },
+  "home": {
+    "content": [
+      {
+        "type": "ElectronicsHero",
+        "props": {
+          "id": "ElectronicsHero-1",
+          "title": "Latest Technology",
+          "subtitle": "Discover cutting-edge electronics",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "Shop Now",
+            "link": "/products"
+          }
+        }
+      },
+      {
+        "type": "BrandsTicker",
+        "props": {
+          "id": "BrandsTicker-2",
+          "title": "Featured Brands",
+          "autoScroll": true
+        }
+      },
+      {
+        "type": "BentoGridCategories",
+        "props": {
+          "id": "BentoGridCategories-3",
+          "title": "Shop by Category",
+          "showViewAll": true,
+          "columns": 4
+        }
+      },
+      {
+        "type": "SnapScrollProducts",
+        "props": {
+          "id": "SnapScrollProducts-4",
+          "title": "Featured Products",
+          "showViewAll": true,
+          "limit": 8
+        }
+      },
+      {
+        "type": "TechFeatures",
+        "props": {
+          "id": "TechFeatures-5",
+          "title": "Why Choose Us",
+          "items": [
+            {
+              "icon": "Shield",
+              "title": "Warranty",
+              "description": "Extended warranty available"
+            },
+            {
+              "icon": "Truck",
+              "title": "Fast Shipping",
+              "description": "Free shipping on orders over $50"
+            },
+            {
+              "icon": "Headphones",
+              "title": "Support",
+              "description": "24/7 customer support"
+            }
+          ]
+        }
+      },
+      {
+        "type": "NewsletterSection",
+        "props": {
+          "id": "NewsletterSection-6",
+          "title": "Stay Updated",
+          "subtitle": "Get the latest tech news and deals"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "All Products",
+          "showFilters": true,
+          "showSort": true,
+          "showViewToggle": true
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1",
+          "showPagination": true,
+          "showCompare": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0",
+          "showAddToCart": true,
+          "showWishlist": true,
+          "showCompare": true,
+          "showSpecs": true,
+          "showReviews": true,
+          "showRelatedProducts": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoriesHeader",
+        "props": {
+          "id": "CategoriesHeader-0",
+          "title": "Categories"
+        }
+      },
+      {
+        "type": "BentoGridCategories",
+        "props": {
+          "id": "BentoGridCategories-1"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "showProducts": true,
+          "showFilters": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0",
+          "title": "About Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0",
+          "title": "Contact Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  },
+  "helpCenter": {
+    "content": [
+      {
+        "type": "HelpCenterPage",
+        "props": {
+          "id": "HelpCenterPage-0",
+          "title": "Help Center",
+          "showSearch": true,
+          "showCategories": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Help Center",
+        "pageId": "helpCenter"
+      }
+    }
+  },
+  "shippingReturns": {
+    "content": [
+      {
+        "type": "ShippingReturnsPage",
+        "props": {
+          "id": "ShippingReturnsPage-0",
+          "title": "Shipping & Returns"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Shipping & Returns",
+        "pageId": "shippingReturns"
+      }
+    }
+  },
+  "trackOrder": {
+    "content": [
+      {
+        "type": "TrackOrderPage",
+        "props": {
+          "id": "TrackOrderPage-0",
+          "title": "Track Your Order"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Track Order",
+        "pageId": "trackOrder"
+      }
+    }
+  },
+  "privacyPolicy": {
+    "content": [
+      {
+        "type": "PrivacyPolicyPage",
+        "props": {
+          "id": "PrivacyPolicyPage-0",
+          "title": "Privacy Policy"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Privacy Policy",
+        "pageId": "privacyPolicy"
+      }
+    }
+  },
+  "terms": {
+    "content": [
+      {
+        "type": "TermsPage",
+        "props": {
+          "id": "TermsPage-0",
+          "title": "Terms of Service"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Terms of Service",
+        "pageId": "terms"
+      }
+    }
+  }
+}

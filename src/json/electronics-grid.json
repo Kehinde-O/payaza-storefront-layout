@@ -1,0 +1,246 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "electronics-grid",
+    "name": "Electronics Grid Layout",
+    "description": "Grid-based electronics layout with modern design",
+    "totalPages": 10
+  },
+  "home": {
+    "content": [
+      {
+        "type": "GridAreaBanner",
+        "props": {
+          "id": "GridAreaBanner-3",
+          "title": "New Arrivals",
+          "subtitle": "Latest tech products",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "Shop Now",
+            "link": "/products"
+          }
+        }
+      },
+      {
+        "type": "ElectronicsGridCategories",
+        "props": {
+          "id": "ElectronicsGridCategories-1",
+          "title": "Shop by Category",
+          "layout": "grid",
+          "columns": 3
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-2",
+          "title": "Featured Products",
+          "layout": "grid",
+          "showViewAll": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "All Products",
+          "layout": "grid"
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "ElectronicsGridCategories",
+        "props": {
+          "id": "ElectronicsGridCategories-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  },
+  "helpCenter": {
+    "content": [
+      {
+        "type": "HelpCenterPage",
+        "props": {
+          "id": "HelpCenterPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Help Center",
+        "pageId": "helpCenter"
+      }
+    }
+  },
+  "shippingReturns": {
+    "content": [
+      {
+        "type": "ShippingReturnsPage",
+        "props": {
+          "id": "ShippingReturnsPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Shipping & Returns",
+        "pageId": "shippingReturns"
+      }
+    }
+  },
+  "trackOrder": {
+    "content": [
+      {
+        "type": "TrackOrderPage",
+        "props": {
+          "id": "TrackOrderPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Track Order",
+        "pageId": "trackOrder"
+      }
+    }
+  },
+  "privacyPolicy": {
+    "content": [
+      {
+        "type": "PrivacyPolicyPage",
+        "props": {
+          "id": "PrivacyPolicyPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Privacy Policy",
+        "pageId": "privacyPolicy"
+      }
+    }
+  },
+  "terms": {
+    "content": [
+      {
+        "type": "TermsPage",
+        "props": {
+          "id": "TermsPage-0",
+          "layout": "grid"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Terms of Service",
+        "pageId": "terms"
+      }
+    }
+  }
+}

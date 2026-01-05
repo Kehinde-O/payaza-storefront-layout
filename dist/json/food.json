@@ -1,0 +1,283 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "food",
+    "name": "Food Layout",
+    "description": "Restaurant and food service layout with menu display",
+    "totalPages": 8
+  },
+  "home": {
+    "content": [
+      {
+        "type": "FoodHero",
+        "props": {
+          "id": "FoodHero-0",
+          "slides": [
+            {
+              "image": "",
+              "title": "Welcome to Our Restaurant",
+              "description": "Experience culinary excellence",
+              "primaryButton": {
+                "text": "View Menu",
+                "link": "/menu"
+              },
+              "secondaryButton": {
+                "text": "Reserve Table",
+                "link": "/reserve"
+              }
+            }
+          ],
+          "title": "Welcome to Our Restaurant",
+          "subtitle": "Experience culinary excellence"
+        }
+      },
+      {
+        "type": "VisualCategories",
+        "props": {
+          "id": "VisualCategories-1",
+          "title": "Our Menu Categories",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "ProcessSteps",
+        "props": {
+          "id": "ProcessSteps-2",
+          "title": "How It Works",
+          "steps": []
+        }
+      },
+      {
+        "type": "MenuGrid",
+        "props": {
+          "id": "MenuGrid-3",
+          "title": "Featured Items",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "ChefStory",
+        "props": {
+          "id": "ChefStory-4",
+          "title": "Meet Our Chef",
+          "description": "Learn about our culinary journey"
+        }
+      },
+      {
+        "type": "Testimonials",
+        "props": {
+          "id": "Testimonials-5",
+          "title": "What Our Customers Say",
+          "showRatings": true
+        }
+      },
+      {
+        "type": "ReservationCTA",
+        "props": {
+          "id": "ReservationCTA-6",
+          "title": "Reserve Your Table",
+          "buttonText": "Book Now",
+          "buttonLink": "/reserve"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "menu": {
+    "content": [
+      {
+        "type": "MenuHeader",
+        "props": {
+          "id": "MenuHeader-0",
+          "title": "Our Menu",
+          "subtitle": "Discover our culinary offerings"
+        }
+      },
+      {
+        "type": "MenuGrid",
+        "props": {
+          "id": "MenuGrid-1",
+          "showCategories": true,
+          "showFilters": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Menu",
+        "pageId": "menu"
+      }
+    }
+  },
+  "menuCategory": {
+    "content": [
+      {
+        "type": "CategoryHeader",
+        "props": {
+          "id": "CategoryHeader-0",
+          "title": "Category",
+          "showBackButton": true
+        }
+      },
+      {
+        "type": "MenuGrid",
+        "props": {
+          "id": "MenuGrid-1",
+          "categoryFilter": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Menu Category",
+        "pageId": "menuCategory"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "All Products",
+          "showFilters": true,
+          "showSort": true
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1",
+          "showPagination": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0",
+          "showAddToCart": true,
+          "showWishlist": true,
+          "showReviews": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoriesHeader",
+        "props": {
+          "id": "CategoriesHeader-0",
+          "title": "Categories",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-1",
+          "showImages": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "showProducts": true,
+          "showDescription": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutHeader",
+        "props": {
+          "id": "AboutHeader-0",
+          "title": "About Us",
+          "showImage": true
+        }
+      },
+      {
+        "type": "AboutContent",
+        "props": {
+          "id": "AboutContent-1",
+          "showStory": true,
+          "showTeam": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactHeader",
+        "props": {
+          "id": "ContactHeader-0",
+          "title": "Contact Us",
+          "subtitle": "Get in touch"
+        }
+      },
+      {
+        "type": "ContactForm",
+        "props": {
+          "id": "ContactForm-1",
+          "showMap": true,
+          "showHours": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  }
+}

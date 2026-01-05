@@ -1,0 +1,381 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "clothing",
+    "name": "Clothing Layout",
+    "description": "Fashion and clothing store layout",
+    "totalPages": 10
+  },
+  "home": {
+    "content": [
+      {
+        "type": "ClothingHero",
+        "props": {
+          "id": "ClothingHero-0",
+          "slides": [
+            {
+              "image": "",
+              "title": "New Collection",
+              "description": "Discover the latest fashion trends",
+              "primaryButton": {
+                "text": "Shop Now",
+                "link": "/products"
+              },
+              "secondaryButton": {
+                "text": "View Collection",
+                "link": "/categories"
+              }
+            }
+          ],
+          "title": "New Collection",
+          "subtitle": "Discover the latest fashion trends"
+        }
+      },
+      {
+        "type": "BenefitsStrip",
+        "props": {
+          "id": "BenefitsStrip-1",
+          "items": [
+            {
+              "icon": "Truck",
+              "text": "Free Shipping"
+            },
+            {
+              "icon": "Shield",
+              "text": "Secure Payment"
+            },
+            {
+              "icon": "RefreshCw",
+              "text": "Easy Returns"
+            }
+          ]
+        }
+      },
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-2",
+          "title": "Shop by Category",
+          "showViewAll": true,
+          "columns": 4
+        }
+      },
+      {
+        "type": "LookbookSection",
+        "props": {
+          "id": "LookbookSection-3",
+          "title": "Editorial",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "FeaturedProducts",
+        "props": {
+          "id": "FeaturedProducts-4",
+          "title": "Trending Now",
+          "showViewAll": true,
+          "limit": 8
+        }
+      },
+      {
+        "type": "NewsletterSection",
+        "props": {
+          "id": "NewsletterSection-5",
+          "title": "Stay Updated",
+          "subtitle": "Subscribe to our newsletter"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "All Products",
+          "showFilters": true,
+          "showSort": true
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1",
+          "showPagination": true,
+          "showWishlist": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0",
+          "showAddToCart": true,
+          "showWishlist": true,
+          "showSizeGuide": true,
+          "showReviews": true,
+          "showRelatedProducts": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoriesHeader",
+        "props": {
+          "id": "CategoriesHeader-0",
+          "title": "Categories",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-1",
+          "showImages": true,
+          "showDescriptions": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "showProducts": true,
+          "showDescription": true,
+          "showFilters": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutHeader",
+        "props": {
+          "id": "AboutHeader-0",
+          "title": "About Us",
+          "showImage": true
+        }
+      },
+      {
+        "type": "AboutContent",
+        "props": {
+          "id": "AboutContent-1",
+          "showStory": true,
+          "showValues": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactHeader",
+        "props": {
+          "id": "ContactHeader-0",
+          "title": "Contact Us",
+          "subtitle": "We'd love to hear from you"
+        }
+      },
+      {
+        "type": "ContactForm",
+        "props": {
+          "id": "ContactForm-1",
+          "showMap": true,
+          "showHours": true,
+          "showSocialLinks": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  },
+  "team": {
+    "content": [
+      {
+        "type": "TeamHeader",
+        "props": {
+          "id": "TeamHeader-0",
+          "title": "Our Team"
+        }
+      },
+      {
+        "type": "TeamGrid",
+        "props": {
+          "id": "TeamGrid-1",
+          "showRoles": true,
+          "showSocialLinks": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Team Page",
+        "pageId": "team"
+      }
+    }
+  },
+  "portfolio": {
+    "content": [
+      {
+        "type": "PortfolioHeader",
+        "props": {
+          "id": "PortfolioHeader-0",
+          "title": "Portfolio"
+        }
+      },
+      {
+        "type": "PortfolioGrid",
+        "props": {
+          "id": "PortfolioGrid-1",
+          "showFilters": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Portfolio Page",
+        "pageId": "portfolio"
+      }
+    }
+  },
+  "styleGuide": {
+    "content": [
+      {
+        "type": "StyleGuideHeader",
+        "props": {
+          "id": "StyleGuideHeader-0",
+          "title": "Style Guide"
+        }
+      },
+      {
+        "type": "StyleGuideContent",
+        "props": {
+          "id": "StyleGuideContent-1",
+          "showLookbook": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Style Guide",
+        "pageId": "styleGuide"
+      }
+    }
+  },
+  "helpCenter": {
+    "content": [
+      {
+        "type": "HelpCenterHeader",
+        "props": {
+          "id": "HelpCenterHeader-0",
+          "title": "Help Center"
+        }
+      },
+      {
+        "type": "HelpCenterContent",
+        "props": {
+          "id": "HelpCenterContent-1",
+          "showSearch": true,
+          "showCategories": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Help Center",
+        "pageId": "helpCenter"
+      }
+    }
+  },
+  "shippingReturns": {
+    "content": [
+      {
+        "type": "ShippingReturnsContent",
+        "props": {
+          "id": "ShippingReturnsContent-0",
+          "title": "Shipping & Returns"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Shipping & Returns",
+        "pageId": "shippingReturns"
+      }
+    }
+  },
+  "trackOrder": {
+    "content": [
+      {
+        "type": "TrackOrderHeader",
+        "props": {
+          "id": "TrackOrderHeader-0",
+          "title": "Track Your Order"
+        }
+      },
+      {
+        "type": "TrackOrderForm",
+        "props": {
+          "id": "TrackOrderForm-1"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Track Order",
+        "pageId": "trackOrder"
+      }
+    }
+  }
+}

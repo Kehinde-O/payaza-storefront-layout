@@ -1,0 +1,224 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "booking",
+    "name": "Booking Layout",
+    "description": "Service booking and appointment scheduling layout",
+    "totalPages": 7
+  },
+  "home": {
+    "content": [
+      {
+        "type": "BookingHero",
+        "props": {
+          "id": "BookingHero-0",
+          "title": "Book Your Appointment",
+          "subtitle": "Schedule a service with our specialists",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "Book Now",
+            "link": "/book"
+          },
+          "secondaryButton": {
+            "text": "View Services",
+            "link": "/services"
+          }
+        }
+      },
+      {
+        "type": "FeaturedServices",
+        "props": {
+          "id": "FeaturedServices-1",
+          "title": "Our Services",
+          "showViewAll": true,
+          "limit": 6
+        }
+      },
+      {
+        "type": "SpecialistProfiles",
+        "props": {
+          "id": "SpecialistProfiles-2",
+          "title": "Meet Our Specialists",
+          "showViewAll": true,
+          "showRatings": true
+        }
+      },
+      {
+        "type": "Testimonials",
+        "props": {
+          "id": "Testimonials-3",
+          "title": "What Our Clients Say",
+          "showRatings": true,
+          "limit": 3
+        }
+      },
+      {
+        "type": "BookingCTA",
+        "props": {
+          "id": "BookingCTA-4",
+          "title": "Ready to Book?",
+          "buttonText": "Schedule Appointment",
+          "buttonLink": "/book"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "services": {
+    "content": [
+      {
+        "type": "ServicesHeader",
+        "props": {
+          "id": "ServicesHeader-0",
+          "title": "Our Services",
+          "showFilters": true,
+          "showSearch": true
+        }
+      },
+      {
+        "type": "ServicesGrid",
+        "props": {
+          "id": "ServicesGrid-1",
+          "showPagination": true,
+          "showBookButton": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Services Listing",
+        "pageId": "services"
+      }
+    }
+  },
+  "serviceDetail": {
+    "content": [
+      {
+        "type": "ServiceDetail",
+        "props": {
+          "id": "ServiceDetail-0",
+          "showBookButton": true,
+          "showDescription": true,
+          "showDuration": true,
+          "showPrice": true,
+          "showSpecialists": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Service Detail",
+        "pageId": "serviceDetail"
+      }
+    }
+  },
+  "book": {
+    "content": [
+      {
+        "type": "BookingHeader",
+        "props": {
+          "id": "BookingHeader-0",
+          "title": "Book Appointment",
+          "showSteps": true
+        }
+      },
+      {
+        "type": "BookingForm",
+        "props": {
+          "id": "BookingForm-1",
+          "showServiceSelection": true,
+          "showDatePicker": true,
+          "showTimeSlot": true,
+          "showSpecialistSelection": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Booking/Appointment",
+        "pageId": "book"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoriesHeader",
+        "props": {
+          "id": "CategoriesHeader-0",
+          "title": "Service Categories"
+        }
+      },
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-1",
+          "showServices": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "showServices": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0",
+          "title": "About Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0",
+          "title": "Contact Us"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  }
+}

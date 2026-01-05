@@ -1,0 +1,10 @@
+'use client';
+import { jsx as _jsx } from "react/jsx-runtime";
+import { RouteSkeletonLoader } from './route-skeleton-loader';
+/**
+ * Client component wrapper for Next.js loading.tsx files
+ * Uses pathname to determine which skeleton to show
+ */
+export function LoadingSkeletonWrapper() {
+    return _jsx(RouteSkeletonLoader, {});
+}

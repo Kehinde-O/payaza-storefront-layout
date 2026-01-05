@@ -1,0 +1,1 @@
+{"version":3,"file":"BaseStoreLayout.d.ts","sourceRoot":"","sources":["../../../../src/layouts/shared/components/BaseStoreLayout.tsx"],"names":[],"mappings":"AAEA,OAAO,EAAE,WAAW,EAAE,MAAM,mBAAmB,CAAC;AAUhD,UAAU,oBAAoB;IAC5B,QAAQ,EAAE,KAAK,CAAC,SAAS,CAAC;IAC1B,WAAW,EAAE,WAAW,CAAC;CAC1B;AAED,wBAAgB,eAAe,CAAC,EAAE,QAAQ,EAAE,WAAW,EAAE,EAAE,oBAAoB,2CA2E9E"}

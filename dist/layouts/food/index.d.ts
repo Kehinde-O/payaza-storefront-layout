@@ -1,0 +1,9 @@
+export { FoodHomePage } from './components/FoodHomePage';
+export { ProductsPage } from './pages/ProductsPage';
+export { ProductDetailPage } from './pages/ProductDetailPage';
+export { CategoryPage } from './pages/CategoryPage';
+export { CategoriesPage } from './pages/CategoriesPage';
+export { MenuPage } from './pages/MenuPage';
+export { AboutPage } from './pages/AboutPage';
+export { ContactPage } from './pages/ContactPage';
+//# sourceMappingURL=index.d.ts.map

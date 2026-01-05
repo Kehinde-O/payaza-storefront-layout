@@ -1,0 +1,361 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "motivational-speaker",
+    "name": "Motivational Speaker Layout",
+    "description": "Premium layout for speakers and coaches",
+    "totalLayouts": 9,
+    "purpose": "Source of truth for layout structures, requirements, and configurations.",
+    "totalPages": 7
+  },
+  "layout": {
+    "metadata": {
+      "id": "motivational-speaker",
+      "name": "Motivational Speaker",
+      "description": "Premium layout for speakers and coaches.",
+      "totalSections": 4,
+      "totalPages": 7
+    },
+    "sections": {
+      "count": 4,
+      "order": [
+        "hero",
+        "featuredServices",
+        "testimonials",
+        "newsletter"
+      ],
+      "requiredSections": [
+        "hero"
+      ],
+      "details": [
+        {
+          "sectionId": "hero",
+          "name": "Hero Section",
+          "order": 1,
+          "required": true
+        },
+        {
+          "sectionId": "featuredServices",
+          "name": "Programs & Courses",
+          "order": 2,
+          "required": false
+        },
+        {
+          "sectionId": "testimonials",
+          "name": "Success Stories",
+          "order": 3,
+          "required": false
+        },
+        {
+          "sectionId": "newsletter",
+          "name": "Newsletter",
+          "order": 4,
+          "required": false
+        }
+      ]
+    },
+    "pages": {
+      "count": 7,
+      "required": [
+        "home",
+        "about",
+        "contact"
+      ],
+      "optional": [
+        "services",
+        "serviceDetail",
+        "subscription",
+        "helpCenter"
+      ],
+      "details": [
+        {
+          "pageId": "home",
+          "name": "Home Page",
+          "sections": [
+            "hero",
+            "featuredServices",
+            "testimonials",
+            "newsletter"
+          ],
+          "required": true
+        },
+        {
+          "pageId": "about",
+          "name": "About Me",
+          "required": true
+        },
+        {
+          "pageId": "contact",
+          "name": "Contact",
+          "required": true
+        },
+        {
+          "pageId": "services",
+          "name": "Services",
+          "required": false
+        },
+        {
+          "pageId": "serviceDetail",
+          "name": "Service Detail",
+          "required": false
+        },
+        {
+          "pageId": "subscription",
+          "name": "Subscription",
+          "required": false
+        },
+        {
+          "pageId": "helpCenter",
+          "name": "Help Center",
+          "required": false
+        }
+      ]
+    }
+  },
+  "home": {
+    "content": [
+      {
+        "type": "MotivationalHero",
+        "props": {
+          "id": "MotivationalHero-0",
+          "title": "Transform Your Life",
+          "subtitle": "Unlock your potential with our programs",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "View Programs",
+            "link": "/services"
+          },
+          "secondaryButton": {
+            "text": "Learn More",
+            "link": "/about"
+          }
+        }
+      },
+      {
+        "type": "FeaturedServices",
+        "props": {
+          "id": "FeaturedServices-1",
+          "title": "Programs & Courses",
+          "showViewAll": true,
+          "limit": 6
+        }
+      },
+      {
+        "type": "Testimonials",
+        "props": {
+          "id": "Testimonials-2",
+          "title": "Success Stories",
+          "showRatings": true,
+          "limit": 3
+        }
+      },
+      {
+        "type": "NewsletterSection",
+        "props": {
+          "id": "NewsletterSection-3",
+          "title": "Stay Inspired",
+          "subtitle": "Subscribe to our newsletter for daily motivation"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "services": {
+    "content": [
+      {
+        "type": "ServicesHeader",
+        "props": {
+          "id": "ServicesHeader-0",
+          "title": "Our Programs",
+          "showFilters": true,
+          "showSearch": true
+        }
+      },
+      {
+        "type": "ServicesGrid",
+        "props": {
+          "id": "ServicesGrid-1",
+          "showPagination": true,
+          "showEnrollButton": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Services Listing",
+        "pageId": "services"
+      }
+    }
+  },
+  "serviceDetail": {
+    "content": [
+      {
+        "type": "ServiceDetail",
+        "props": {
+          "id": "ServiceDetail-0",
+          "showEnrollButton": true,
+          "showDescription": true,
+          "showDuration": true,
+          "showPrice": true,
+          "showCurriculum": true,
+          "showTestimonials": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Service Detail",
+        "pageId": "serviceDetail"
+      }
+    }
+  },
+  "subscription": {
+    "content": [
+      {
+        "type": "SubscriptionHeader",
+        "props": {
+          "id": "SubscriptionHeader-0",
+          "title": "Subscription Plans"
+        }
+      },
+      {
+        "type": "SubscriptionPlans",
+        "props": {
+          "id": "SubscriptionPlans-1",
+          "showFeatures": true,
+          "showPricing": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Subscription",
+        "pageId": "subscription"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "Products"
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutHeader",
+        "props": {
+          "id": "AboutHeader-0",
+          "title": "About Me",
+          "showImage": true
+        }
+      },
+      {
+        "type": "AboutContent",
+        "props": {
+          "id": "AboutContent-1",
+          "showStory": true,
+          "showAchievements": true,
+          "showCertifications": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactHeader",
+        "props": {
+          "id": "ContactHeader-0",
+          "title": "Contact Me",
+          "subtitle": "Let's connect"
+        }
+      },
+      {
+        "type": "ContactForm",
+        "props": {
+          "id": "ContactForm-1",
+          "showSocialLinks": true,
+          "showBookingLink": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  },
+  "helpCenter": {
+    "content": [
+      {
+        "type": "HelpCenterHeader",
+        "props": {
+          "id": "HelpCenterHeader-0",
+          "title": "Help Center"
+        }
+      },
+      {
+        "type": "HelpCenterContent",
+        "props": {
+          "id": "HelpCenterContent-1",
+          "showSearch": true,
+          "showCategories": true,
+          "showFAQs": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Help Center",
+        "pageId": "helpCenter"
+      }
+    }
+  }
+}

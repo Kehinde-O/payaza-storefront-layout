@@ -1,0 +1,203 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "clothing-minimal",
+    "name": "Clothing Minimal Layout",
+    "description": "Minimalist fashion store layout",
+    "totalPages": 8
+  },
+  "home": {
+    "content": [
+      {
+        "type": "ClothingHeroMinimal",
+        "props": {
+          "id": "ClothingHeroMinimal-1",
+          "title": "Minimal Style",
+          "subtitle": "Timeless elegance",
+          "showCTA": true,
+          "primaryButton": {
+            "text": "Shop Now",
+            "link": "/products"
+          }
+        }
+      },
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-2",
+          "title": "Collections",
+          "layout": "minimal",
+          "columns": 3
+        }
+      },
+      {
+        "type": "ShopTheLook",
+        "props": {
+          "id": "ShopTheLook-3",
+          "title": "Shop the Look",
+          "showViewAll": true
+        }
+      },
+      {
+        "type": "FeaturedProducts",
+        "props": {
+          "id": "FeaturedProducts-4",
+          "title": "Featured",
+          "limit": 6,
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "products": {
+    "content": [
+      {
+        "type": "ProductsHeader",
+        "props": {
+          "id": "ProductsHeader-0",
+          "title": "Products",
+          "layout": "minimal"
+        }
+      },
+      {
+        "type": "ProductsGrid",
+        "props": {
+          "id": "ProductsGrid-1",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Products Listing",
+        "pageId": "products"
+      }
+    }
+  },
+  "productDetail": {
+    "content": [
+      {
+        "type": "ProductDetail",
+        "props": {
+          "id": "ProductDetail-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Product Detail",
+        "pageId": "productDetail"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  },
+  "styleGuide": {
+    "content": [
+      {
+        "type": "StyleGuidePage",
+        "props": {
+          "id": "StyleGuidePage-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Style Guide",
+        "pageId": "styleGuide"
+      }
+    }
+  },
+  "helpCenter": {
+    "content": [
+      {
+        "type": "HelpCenterPage",
+        "props": {
+          "id": "HelpCenterPage-0",
+          "layout": "minimal"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Help Center",
+        "pageId": "helpCenter"
+      }
+    }
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2025-01-05",
+  "metadata": {
+    "layoutId": "booking-agenda",
+    "name": "Booking Agenda Layout",
+    "description": "Agenda-based booking layout with calendar view",
+    "totalPages": 7
+  },
+  "home": {
+    "content": [
+      {
+        "type": "DateScroller",
+        "props": {
+          "id": "DateScroller-2",
+          "title": "Select Date",
+          "showNavigation": true,
+          "showTodayButton": true
+        }
+      },
+      {
+        "type": "TimeSlotGrid",
+        "props": {
+          "id": "TimeSlotGrid-1",
+          "title": "Available Time Slots",
+          "showServiceFilter": true
+        }
+      },
+      {
+        "type": "ServiceQuickView",
+        "props": {
+          "id": "ServiceQuickView-3",
+          "title": "Services",
+          "showViewAll": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Home Page",
+        "pageId": "home"
+      }
+    }
+  },
+  "services": {
+    "content": [
+      {
+        "type": "ServicesHeader",
+        "props": {
+          "id": "ServicesHeader-0",
+          "title": "Our Services"
+        }
+      },
+      {
+        "type": "ServicesGrid",
+        "props": {
+          "id": "ServicesGrid-1"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Services Listing",
+        "pageId": "services"
+      }
+    }
+  },
+  "serviceDetail": {
+    "content": [
+      {
+        "type": "ServiceDetail",
+        "props": {
+          "id": "ServiceDetail-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Service Detail",
+        "pageId": "serviceDetail"
+      }
+    }
+  },
+  "book": {
+    "content": [
+      {
+        "type": "BookingAgendaForm",
+        "props": {
+          "id": "BookingAgendaForm-0",
+          "showCalendar": true,
+          "showTimeSlots": true
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Booking/Appointment",
+        "pageId": "book"
+      }
+    }
+  },
+  "categories": {
+    "content": [
+      {
+        "type": "CategoryGrid",
+        "props": {
+          "id": "CategoryGrid-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Categories Listing",
+        "pageId": "categories"
+      }
+    }
+  },
+  "categoryDetail": {
+    "content": [
+      {
+        "type": "CategoryDetail",
+        "props": {
+          "id": "CategoryDetail-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Category Detail",
+        "pageId": "categoryDetail"
+      }
+    }
+  },
+  "about": {
+    "content": [
+      {
+        "type": "AboutPage",
+        "props": {
+          "id": "AboutPage-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "About Page",
+        "pageId": "about"
+      }
+    }
+  },
+  "contact": {
+    "content": [
+      {
+        "type": "ContactPage",
+        "props": {
+          "id": "ContactPage-0"
+        }
+      }
+    ],
+    "root": {
+      "props": {
+        "title": "Contact Page",
+        "pageId": "contact"
+      }
+    }
+  }
+}

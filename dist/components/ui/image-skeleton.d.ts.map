@@ -1,0 +1,1 @@
+{"version":3,"file":"image-skeleton.d.ts","sourceRoot":"","sources":["../../../src/components/ui/image-skeleton.tsx"],"names":[],"mappings":"AAKA,UAAU,kBAAkB;IAC1B,SAAS,CAAC,EAAE,MAAM,CAAC;IACnB,WAAW,CAAC,EAAE,QAAQ,GAAG,KAAK,GAAG,KAAK,GAAG,KAAK,GAAG,MAAM,GAAG,MAAM,CAAC;CAClE;AAED,wBAAgB,aAAa,CAAC,EAAE,SAAS,EAAE,WAAsB,EAAE,EAAE,kBAAkB,2CA+BtF"}

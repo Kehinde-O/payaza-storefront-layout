@@ -1,0 +1,1 @@
+{"version":3,"file":"product-grid-skeleton.d.ts","sourceRoot":"","sources":["../../../../src/components/ui/skeletons/product-grid-skeleton.tsx"],"names":[],"mappings":"AAEA,UAAU,wBAAwB;IAChC,KAAK,CAAC,EAAE,MAAM,CAAC;IACf,OAAO,CAAC,EAAE,MAAM,CAAC;CAClB;AAED,wBAAgB,mBAAmB,CAAC,EAAE,KAAS,EAAE,OAAW,EAAE,EAAE,wBAAwB,2CAgBvF"}
