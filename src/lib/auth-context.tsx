@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, User as ApiUser } from './services/auth.service';
 import { customerService } from './services/customer.service';
@@ -30,14 +30,14 @@ interface AuthContextType {
   updateUserState: (user: User) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
-  logout: () => {},
-  updateProfile: async () => {},
-  updateUserState: () => {},
+  login: async () => { },
+  logout: () => { },
+  updateProfile: async () => { },
+  updateUserState: () => { },
 });
 
 
@@ -50,8 +50,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const loadUser = async () => {
       try {
         setIsLoading(true);
+
+        // Check if we're in preview mode - skip all API calls to prevent session invalidation
+        const isPreview = typeof window !== 'undefined' && (window as any).__IS_PREVIEW__;
+
+        if (isPreview) {
+          // In preview mode, don't make any API calls or clear tokens
+          // Just return empty auth state to prevent interfering with parent window session
+          console.log('[AuthProvider] Preview mode detected - skipping auth API calls');
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
         const token = localStorage.getItem('token');
-        
+
         if (token) {
           // Try to get current user from API
           try {
@@ -60,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Parse address if it exists (address may not be in API response)
             const addressData = (response as any).address || {};
             const addressObj = typeof addressData === 'string' ? (addressData ? JSON.parse(addressData) : {}) : addressData;
-            
+
             const user: User = {
               id: response.id,
               firstName: response.firstName,
@@ -97,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, []);
 
-  const login = async (email: string, password?: string) => {
+  const login = useCallback(async (email: string, password?: string) => {
     setIsLoading(true);
     try {
       // Password is required for real API login
@@ -110,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Parse address if it exists (address may not be in API response)
       const addressData = (response.user as any).address || {};
       const addressObj = typeof addressData === 'string' ? (addressData ? JSON.parse(addressData) : {}) : addressData;
-      
+
       const user: User = {
         id: response.user.id,
         firstName: response.user.firstName,
@@ -125,14 +138,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         country: addressObj.country || '',
         createdAt: (response.user as any).createdAt,
       };
-      
+
       // Store tokens
       localStorage.setItem('token', response.token);
       if (response.refreshToken) {
         localStorage.setItem('refreshToken', response.refreshToken);
       }
       localStorage.setItem('storefront_user', JSON.stringify(user));
-      
+
       // Clear guest user info since user is now authenticated
       if (typeof window !== 'undefined') {
         try {
@@ -142,9 +155,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('Failed to clear guest user info:', error);
         }
       }
-      
+
       setUser(user);
-      
+
       // Trigger cart refresh after login - the backend will automatically merge session cart with user cart
       // when the next cart operation happens, but we can trigger a refresh here to ensure cart is loaded
       if (typeof window !== 'undefined') {
@@ -157,17 +170,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem('storefront_user');
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
     router.push('/');
-  };
+  }, [router]);
 
-  const updateProfile = async (data: Partial<User>) => {
+  const updateProfile = useCallback(async (data: Partial<User>) => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -180,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Parse address if it exists
       const addressData = updatedUser.address || {};
       const addressObj = typeof addressData === 'string' ? (addressData ? JSON.parse(addressData) : {}) : addressData;
-      
+
       const user: User = {
         id: updatedUser.id,
         firstName: updatedUser.firstName,
@@ -202,22 +215,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Update user state without triggering isLoading
    * This is used for updating user state after profile save without showing full-page loading
    */
-  const updateUserState = (user: User) => {
+  const updateUserState = useCallback((user: User) => {
     try {
       // Validate required fields before updating
       if (!user || !user.id || !user.firstName || !user.lastName || !user.email) {
         console.error('Invalid user data provided to updateUserState:', user);
         throw new Error('Invalid user data: missing required fields');
       }
-      
+
       setUser(user);
-      
+
       // Safely update localStorage
       try {
         localStorage.setItem('storefront_user', JSON.stringify(user));
@@ -229,18 +242,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error in updateUserState:', error);
       throw error;
     }
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user,
+    isAuthenticated: !!user,
+    isLoading,
+    login,
+    logout,
+    updateProfile,
+    updateUserState
+  }), [user, isLoading, login, logout, updateProfile, updateUserState]);
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isAuthenticated: !!user,
-      isLoading,
-      login,
-      logout,
-      updateProfile,
-      updateUserState
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

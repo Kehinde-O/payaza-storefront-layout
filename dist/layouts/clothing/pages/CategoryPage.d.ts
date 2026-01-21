@@ -3,6 +3,6 @@ interface CategoryPageProps {
     storeConfig: StoreConfig;
     categorySlug: string;
 }
-export declare function CategoryPage({ storeConfig, categorySlug }: CategoryPageProps): import("react/jsx-runtime").JSX.Element;
+export declare function CategoryPage({ storeConfig: initialConfig, categorySlug }: CategoryPageProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=CategoryPage.d.ts.map

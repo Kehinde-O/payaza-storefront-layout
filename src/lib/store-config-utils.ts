@@ -690,13 +690,15 @@ function transformStoreResponseToConfig(apiStore: StoreResponse): StoreConfig {
   const layout = mapLayoutToStoreLayoutType(apiStore.layout);
 
   // Debug logging for layoutConfig
-  console.log('[transformStoreResponseToConfig] Received apiStore.layoutConfig:', {
-    exists: !!apiStore.layoutConfig,
-    type: typeof apiStore.layoutConfig,
-    hasSections: !!(apiStore.layoutConfig as any)?.sections,
-    hasHeroSliders: !!(apiStore.layoutConfig as any)?.sections?.hero?.sliders,
-    sliderCount: (apiStore.layoutConfig as any)?.sections?.hero?.sliders?.length || 0,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[transformStoreResponseToConfig] Received apiStore.layoutConfig:', {
+      exists: !!apiStore.layoutConfig,
+      type: typeof apiStore.layoutConfig,
+      hasSections: !!(apiStore.layoutConfig as any)?.sections,
+      hasHeroSliders: !!(apiStore.layoutConfig as any)?.sections?.hero?.sliders,
+      sliderCount: (apiStore.layoutConfig as any)?.sections?.hero?.sliders?.length || 0,
+    });
+  }
 
   // Build contactInfo from various sources
   let contactInfo = apiStore.contactInfo || {
@@ -714,12 +716,14 @@ function transformStoreResponseToConfig(apiStore: StoreResponse): StoreConfig {
   }
 
   const transformedLayoutConfig = transformLayoutConfig(apiStore.layoutConfig, apiStore.slug);
-  console.log('[transformStoreResponseToConfig] Transformed layoutConfig:', {
-    exists: !!transformedLayoutConfig,
-    hasSections: !!transformedLayoutConfig?.sections,
-    hasHeroSliders: !!transformedLayoutConfig?.sections?.hero?.sliders,
-    sliderCount: transformedLayoutConfig?.sections?.hero?.sliders?.length || 0,
-  });
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[transformStoreResponseToConfig] Transformed layoutConfig:', {
+      exists: !!transformedLayoutConfig,
+      hasSections: !!transformedLayoutConfig?.sections,
+      hasHeroSliders: !!transformedLayoutConfig?.sections?.hero?.sliders,
+      sliderCount: transformedLayoutConfig?.sections?.hero?.sliders?.length || 0,
+    });
+  }
 
   return {
     id: apiStore.id,
@@ -816,7 +820,7 @@ function transformLayoutConfig(layoutContent: any, storeSlug?: string): StoreLay
     sections.marketing = {
       show: layoutContent.sections.marketing.show !== false,
       showNewsletter: layoutContent.sections.marketing.showNewsletter !== false,
-      showPromoBanner: layoutContent.sections.marketing.showPromoBanner !== false,
+      showPromoBanner: layoutContent.sections.marketing.showPromoBanner === true,
       // Preserve all marketing subsections exactly as stored
       editorial: layoutContent.sections.marketing.editorial,
       promoBanner: layoutContent.sections.marketing.promoBanner,
@@ -883,13 +887,13 @@ function transformLayoutConfig(layoutContent: any, storeSlug?: string): StoreLay
                               assignedText['promo_cta'] || 
                               assignedText['cta_text'];
       
-      const bannerButtonLink = assignedText['promo_banner_link'] || 
-                              assignedText['sale_banner:button_link'] || 
-                              '/products';
-      
-      marketing.showPromoBanner = true;
+      const bannerButtonLink = assignedText['promo_banner_link'] ||
+        assignedText['sale_banner:button_link'] ||
+        '/products';
+
+      marketing.showPromoBanner = false; // Disable by default
       marketing.promoBanner = {
-        show: true,
+        show: false, // Disable by default
         image: bannerImage,
         title: bannerTitle,
         subtitle: bannerSubtitle,
@@ -1191,7 +1195,7 @@ function transformLayoutConfig(layoutContent: any, storeSlug?: string): StoreLay
   // PromoBanner section - new structured format (directly in sections, not just in marketing)
   if (layoutContent.sections?.promoBanner) {
     sections.promoBanner = {
-      show: layoutContent.sections.promoBanner.show !== false,
+      show: layoutContent.sections.promoBanner.show === true,
       image: layoutContent.sections.promoBanner.image,
       title: layoutContent.sections.promoBanner.title || '',
       subtitle: layoutContent.sections.promoBanner.subtitle,
@@ -1463,12 +1467,21 @@ function transformLayoutConfig(layoutContent: any, storeSlug?: string): StoreLay
   };
 
   // Remove undefined values to keep the config clean
-  const cleanTextConfig = JSON.parse(JSON.stringify(textConfig, (key, value) => {
-    if (value === undefined || (typeof value === 'object' && value !== null && Object.keys(value).length === 0)) {
-      return undefined;
-    }
-    return value;
-  }));
+  const cleanConfig = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(cleanConfig).filter(v => v !== undefined);
+    
+    const newObj: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      const cleaned = cleanConfig(value);
+      if (cleaned !== undefined && !(typeof cleaned === 'object' && cleaned !== null && Object.keys(cleaned).length === 0)) {
+        newObj[key] = cleaned;
+      }
+    });
+    return Object.keys(newObj).length > 0 ? newObj : undefined;
+  };
+
+  const cleanTextConfig = cleanConfig(textConfig);
 
   // Transform theme colors if provided
   let themeColors: StoreLayoutConfig['themeColors'] | undefined;

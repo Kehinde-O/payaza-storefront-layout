@@ -10,7 +10,7 @@ import { useContentReady } from '@/hooks/use-content-ready';
 
 // Configure NProgress
 if (typeof window !== 'undefined') {
-  NProgress.configure({ 
+  NProgress.configure({
     showSpinner: true,
     trickleSpeed: 200,
     minimum: 0.08,
@@ -32,7 +32,7 @@ interface LoadingContextType {
   stopBackendLoading: () => void;
 }
 
-const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
+export const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
 
 export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
   const [targetPathname, setTargetPathname] = useState<string | null>(null);
   const [backendLoadingCount, setBackendLoadingCount] = useState(0);
   const pathname = usePathname();
-  
+
   // Safely get searchParams - may not be available during static generation
   let searchParams: ReturnType<typeof useSearchParams> | null = null;
   try {
@@ -50,10 +50,11 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     // useSearchParams not available (e.g., during static generation)
     searchParams = null;
   }
-  
+
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousPathnameRef = useRef<string | null>(null);
   const skeletonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const nprogressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use content detection to determine when page content is ready
   const { isContentReady } = useContentReady({
@@ -109,6 +110,9 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
       if (skeletonTimeoutRef.current) {
         clearTimeout(skeletonTimeoutRef.current);
       }
+      if (nprogressTimeoutRef.current) {
+        clearTimeout(nprogressTimeoutRef.current);
+      }
     };
   }, [pathname, searchParams?.toString()]);
 
@@ -116,11 +120,19 @@ export function LoadingProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(loading);
     if (typeof window !== 'undefined') {
       if (loading) {
+        if (nprogressTimeoutRef.current) {
+          clearTimeout(nprogressTimeoutRef.current);
+          nprogressTimeoutRef.current = null;
+        }
         NProgress.start();
       } else {
         // Small delay to ensure smooth transition
-        setTimeout(() => {
+        if (nprogressTimeoutRef.current) {
+          clearTimeout(nprogressTimeoutRef.current);
+        }
+        nprogressTimeoutRef.current = setTimeout(() => {
           NProgress.done();
+          nprogressTimeoutRef.current = null;
         }, 100);
       }
     }

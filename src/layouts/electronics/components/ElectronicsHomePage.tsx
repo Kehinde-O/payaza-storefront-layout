@@ -11,16 +11,19 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { useStore } from '@/lib/store-context';
 import { useToast } from '@/components/ui/toast';
-import { formatCurrency, filterActiveProducts } from '../../../lib/utils';
-import { getLayoutText } from '../../../lib/utils/asset-helpers';
+import { formatCurrency, filterActiveProducts } from '@/lib/utils';
+import { getLayoutText } from '@/lib/utils/asset-helpers';
 import { PromoBanner } from '../../shared/components/PromoBanner';
 
 interface ElectronicsHomePageProps {
    storeConfig: StoreConfig;
 }
 
-export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
-   const { addToCart } = useStore();
+export function ElectronicsHomePage({ storeConfig: initialConfig }: ElectronicsHomePageProps) {
+   const { store, addToCart } = useStore();
+   const storeConfig = store || initialConfig;
+   
+   const MotionDiv = motion.div as any;
    const { addToast } = useToast();
    const scrollContainerRef = useRef<HTMLDivElement>(null);
    const [email, setEmail] = useState('');
@@ -54,11 +57,34 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
       }
    };
 
-   // Use categories directly from backend - no duplication
-   const categories = storeConfig.categories || [];
+   // In preview mode, use mock data if none are available
+   const isPreview = (typeof window !== 'undefined' && (window as any).__IS_PREVIEW__) || storeConfig.layoutConfig?.isPreview;
 
-   // Use products directly from backend - no duplication, filter out inactive/deleted
-   const products = filterActiveProducts(storeConfig.products || []);
+   const categories = (storeConfig.categories && storeConfig.categories.length > 0)
+     ? storeConfig.categories
+     : (isPreview ? [
+       { id: 'cat1', name: 'Smartphones', slug: 'phones', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800' },
+       { id: 'cat2', name: 'Laptops', slug: 'laptops', image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800' },
+       { id: 'cat3', name: 'Audio', slug: 'audio', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800' },
+       { id: 'cat4', name: 'Wearables', slug: 'wearables', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800' }
+     ] : []);
+
+   const rawProducts = storeConfig.products || [];
+   const activeProducts = filterActiveProducts(rawProducts);
+   
+   // Use real active products if available, otherwise if in preview, use all products (including drafts), 
+   // and if still none, use mock data
+   const products = activeProducts.length > 0 
+     ? activeProducts 
+     : (isPreview && rawProducts.length > 0 
+         ? rawProducts 
+         : (isPreview ? [
+             { id: 'p1', name: 'Ultra HD Laptop', price: 1299, currency: 'USD', images: ['https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800'], slug: 'ultra-hd-laptop' },
+             { id: 'p2', name: 'Noise Cancelling Headphones', price: 299, currency: 'USD', images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=800'], slug: 'noise-cancelling-headphones' },
+             { id: 'p3', name: 'Smart Watch Series X', price: 399, currency: 'USD', images: ['https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800'], slug: 'smart-watch' },
+             { id: 'p4', name: 'Wireless Earbuds', price: 159, currency: 'USD', images: ['https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?q=80&w=800'], slug: 'wireless-earbuds' }
+           ] : []));
+
 
    const targetRef = useRef(null);
    const { scrollYProgress } = useScroll({
@@ -86,7 +112,11 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
 
          {/* Hero Section - Dark Mode Tech Theme */}
          {layout?.hero?.show !== false && (
-            <section ref={targetRef} className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-slate-950">
+            <section
+               data-section="hero"
+               ref={targetRef}
+               className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-slate-950"
+            >
                {/* Animated Background */}
                <div className="absolute inset-0 overflow-hidden pointer-events-none">
                   <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px]" />
@@ -96,19 +126,19 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
 
                <div className="container mx-auto px-6 relative z-10 py-20">
                   <div className="grid lg:grid-cols-2 gap-16 items-center">
-                     <motion.div
+                     <MotionDiv
                         style={{ opacity, scale }}
                         className="space-y-8 relative z-20"
                      >
                         {layout?.hero?.showBadges !== false && (
                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/50 border border-slate-800 text-blue-400 text-xs font-bold uppercase tracking-wider backdrop-blur-md">
                               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                              {getLayoutText(storeConfig, 'electronics.newArrivals', 'Next Gen • 2025 Series')}
+                              {layout?.sections?.hero?.badge || getLayoutText(storeConfig, 'electronics.newArrivals', 'Next Gen • 2025 Series')}
                            </div>
                         )}
 
                         <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] text-white">
-                           {getLayoutText(storeConfig, 'hero.title', 'Future Realized')} <br />
+                           {layout?.sections?.hero?.title || getLayoutText(storeConfig, 'hero.title', 'Future Realized')} <br />
                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
                               Realized.
                            </span>
@@ -126,14 +156,14 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
                         </div>
 
                         <p className="text-lg text-slate-400 max-w-xl leading-relaxed font-medium">
-                           {storeConfig.description} Experience the pinnacle of engineering with our curated collection of premium electronics.
+                           {layout?.sections?.hero?.subtitle || `${storeConfig.description} Experience the pinnacle of engineering with our curated collection of premium electronics.`}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-4 pt-4">
                            {layout?.hero?.showCTA !== false && (
                               <Link href={`/${storeConfig.slug}/products`}>
                                  <Button className="h-14 px-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(59,130,246,0.5)] border-0 ring-0">
-                                    {getLayoutText(storeConfig, 'common.shopNow', 'Shop Now')} <ArrowRight className="ml-2 h-5 w-5" />
+                                    {layout?.sections?.hero?.primaryCTA || getLayoutText(storeConfig, 'common.shopNow', 'Shop Now')} <ArrowRight className="ml-2 h-5 w-5" />
                                  </Button>
                               </Link>
                            )}
@@ -153,10 +183,10 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
                               </div>
                            )}
                         </div>
-                     </motion.div>
+                     </MotionDiv>
 
                      <div className="relative h-[600px] hidden lg:block perspective-1000">
-                        <motion.div
+                        <MotionDiv
                            initial={{ opacity: 0, x: 100, rotateY: -20 }}
                            animate={{ opacity: 1, x: 0, rotateY: 0 }}
                            transition={{ duration: 1, ease: "easeOut" }}
@@ -187,7 +217,7 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
                            </div>
 
                            {/* Floating Elements */}
-                           <motion.div
+                           <MotionDiv
                               animate={{ y: [0, -20, 0] }}
                               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
                               className="absolute top-20 right-10 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10"
@@ -201,9 +231,9 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
                                     <p className="text-sm font-bold text-white">24 Hours</p>
                                  </div>
                               </div>
-                           </motion.div>
+                           </MotionDiv>
 
-                           <motion.div
+                           <MotionDiv
                               animate={{ y: [0, 20, 0] }}
                               transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
                               className="absolute bottom-40 left-0 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10"
@@ -217,207 +247,237 @@ export function ElectronicsHomePage({ storeConfig }: ElectronicsHomePageProps) {
                                     <p className="text-sm font-bold text-white">5G Ultra</p>
                                  </div>
                               </div>
-                           </motion.div>
-                        </motion.div>
+                           </MotionDiv>
+                        </MotionDiv>
                      </div>
                   </div>
                </div>
             </section>
-         )}
+         )
+         }
 
          {/* Brands Ticker */}
-         {layout?.sections?.brands?.show !== false && (
-            <div className="bg-slate-950 border-y border-slate-900 overflow-hidden py-10">
-               <div className="flex gap-16 items-center animate-scroll whitespace-nowrap opacity-50 hover:opacity-100 transition-opacity duration-300">
-                  {[...Array(2)].map((_, i) => (
-                     <div key={i} className="flex gap-16 items-center">
-                        {['SONY', 'SAMSUNG', 'APPLE', 'DELL', 'LG', 'ASUS', 'HP', 'BOSE', 'CANON', 'NIKON'].map((brand) => (
-                           <span key={brand} className="text-3xl font-black text-slate-800 tracking-tight hover:text-slate-600 transition-colors cursor-default select-none">{brand}</span>
-                        ))}
-                     </div>
-                  ))}
+         {
+            layout?.sections?.brands?.show !== false && (
+               <div
+                  data-section="brands"
+                  className="bg-slate-950 border-y border-slate-900 overflow-hidden py-10"
+               >
+                  <div className="flex gap-16 items-center animate-scroll whitespace-nowrap opacity-50 hover:opacity-100 transition-opacity duration-300">
+                     {[...Array(2)].map((_, i) => (
+                        <div key={i} className="flex gap-16 items-center">
+                           {['SONY', 'SAMSUNG', 'APPLE', 'DELL', 'LG', 'ASUS', 'HP', 'BOSE', 'CANON', 'NIKON'].map((brand) => (
+                              <span key={brand} className="text-3xl font-black text-slate-800 tracking-tight hover:text-slate-600 transition-colors cursor-default select-none">{brand}</span>
+                           ))}
+                        </div>
+                     ))}
+                  </div>
                </div>
-            </div>
-         )}
+            )
+         }
 
          {/* Bento Grid Categories */}
-         {layout?.sections?.categories?.show !== false && (
-            <section className="py-16 md:py-32 bg-slate-50">
-               <div className="container mx-auto px-6">
-                  <div className="flex justify-between items-end mb-10 md:mb-16">
-                     <div>
-                        <h2 className="text-4xl font-bold mb-4 text-slate-900 tracking-tight">Ecosystems</h2>
-                        <p className="text-lg text-slate-500">Curated collections for every aspect of your digital life.</p>
+         {
+            layout?.sections?.categories?.show !== false && (
+               <section
+                  data-section="categories"
+                  className="py-16 md:py-32 bg-slate-50"
+               >
+                  <div className="container mx-auto px-6">
+                     <div className="flex justify-between items-end mb-10 md:mb-16">
+                        <div>
+                           <h2 className="text-4xl font-bold mb-4 text-slate-900 tracking-tight">Ecosystems</h2>
+                           <p className="text-lg text-slate-500">Curated collections for every aspect of your digital life.</p>
+                        </div>
+                        {layout?.sections?.categories?.showViewAll !== false && (
+                           <Link href={`/${storeConfig.slug}/categories`} className="flex items-center gap-2 text-blue-600 font-bold hover:gap-3 transition-all">
+                              View All <ArrowRight className="h-5 w-5" />
+                           </Link>
+                        )}
                      </div>
-                     {layout?.sections?.categories?.showViewAll !== false && (
-                        <Link href={`/${storeConfig.slug}/categories`} className="flex items-center gap-2 text-blue-600 font-bold hover:gap-3 transition-all">
-                           View All <ArrowRight className="h-5 w-5" />
-                        </Link>
+
+                     {categories.length === 0 ? (
+                        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+                           <h3 className="text-xl font-semibold text-slate-900 mb-2">No categories available</h3>
+                           <p className="text-slate-500">Categories will appear here once they are added to the store.</p>
+                        </div>
+                     ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[300px]">
+                           {categories.slice(0, layout?.sections?.categories?.limit || 5).map((category, idx) => {
+                              const isLarge = idx === 0 || idx === 3;
+                              return (
+                                 <Link
+                                    key={idx}
+                                    href={`/${storeConfig.slug}/categories/${category.slug}`}
+                                    className={`group relative overflow-hidden rounded-[2.5rem] bg-white shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 ${isLarge ? 'md:col-span-2' : 'md:col-span-1'}`}
+                                 >
+                                    <ImageWithFallback
+                                       src={category.image}
+                                       alt={category.name}
+                                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                       skeletonAspectRatio="auto"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+
+                                    <div className="absolute bottom-0 left-0 p-8 w-full">
+                                       <div className="mb-3 text-white/80 group-hover:text-blue-400 transition-colors">
+                                          {getCategoryIcon(category.slug)}
+                                       </div>
+                                       <h3 className={`font-bold text-white mb-2 ${isLarge ? 'text-3xl' : 'text-xl'}`}>{category.name}</h3>
+                                       <div className="w-10 h-1 bg-blue-500 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
+                                    </div>
+                                 </Link>
+                              );
+                           })}
+                        </div>
                      )}
                   </div>
-
-                  {categories.length === 0 ? (
-                     <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-                        <h3 className="text-xl font-semibold text-slate-900 mb-2">No categories available</h3>
-                        <p className="text-slate-500">Categories will appear here once they are added to the store.</p>
-                     </div>
-                  ) : (
-                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[300px]">
-                        {categories.slice(0, layout?.sections?.categories?.limit || 5).map((category, idx) => {
-                           const isLarge = idx === 0 || idx === 3;
-                           return (
-                              <Link
-                                 key={idx}
-                                 href={`/${storeConfig.slug}/categories/${category.slug}`}
-                                 className={`group relative overflow-hidden rounded-[2.5rem] bg-white shadow-sm border border-slate-100 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 ${isLarge ? 'md:col-span-2' : 'md:col-span-1'}`}
-                              >
-                                 <ImageWithFallback
-                                    src={category.image}
-                                    alt={category.name}
-                                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                    skeletonAspectRatio="auto"
-                                 />
-                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-
-                                 <div className="absolute bottom-0 left-0 p-8 w-full">
-                                    <div className="mb-3 text-white/80 group-hover:text-blue-400 transition-colors">
-                                       {getCategoryIcon(category.slug)}
-                                    </div>
-                                    <h3 className={`font-bold text-white mb-2 ${isLarge ? 'text-3xl' : 'text-xl'}`}>{category.name}</h3>
-                                    <div className="w-10 h-1 bg-blue-500 rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300" />
-                                 </div>
-                              </Link>
-                           );
-                        })}
-                     </div>
-                  )}
-               </div>
-            </section>
-         )}
+               </section>
+            )
+         }
 
          {/* Featured Products - Horizontal Snap Scroll */}
-         {layout?.sections?.featuredProducts?.show !== false && (
-            <section className="py-16 md:py-32 bg-white relative overflow-hidden">
-               <div className="container mx-auto px-6 relative z-10">
-                  <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-6">
-                     <div className="max-w-2xl">
-                        <span className="text-blue-600 font-bold tracking-widest text-xs uppercase mb-3 block">Latest Drops</span>
-                        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
-                           {layout?.sections?.featuredProducts?.title || "Performance Redefined"}
-                        </h2>
-                     </div>
-                     <div className="flex gap-2">
-                        <Button variant="outline" size="icon" onClick={scrollLeft} className="rounded-full border-slate-200 hover:bg-slate-100 hover:text-slate-900">
-                           <ArrowRight className="h-5 w-5 rotate-180" />
-                        </Button>
-                        <Button variant="outline" size="icon" onClick={scrollRight} className="rounded-full border-slate-200 hover:bg-slate-100 hover:text-slate-900">
-                           <ArrowRight className="h-5 w-5" />
-                        </Button>
-                     </div>
-                  </div>
-
-                  <div ref={scrollContainerRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 pb-12 -mx-6 px-6 scrollbar-hide">
-                     {products.map((product) => (
-                        <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center group">
-                           <div className="relative aspect-[4/5] bg-slate-50 rounded-[2.5rem] overflow-hidden mb-6 border border-slate-100">
-                              <div className="absolute top-4 left-4 z-20">
-                                 {product.compareAtPrice && (
-                                    <span className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-full">SALE</span>
-                                 )}
-                              </div>
-                              {layout?.sections?.featuredProducts?.showAddToCart !== false && (
-                                 <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button size="icon" onClick={(e) => handleAddToCart(e, product)} className="rounded-full bg-white text-slate-900 hover:bg-blue-600 hover:text-white shadow-lg">
-                                       <ShoppingCart className="h-4 w-4" />
-                                    </Button>
-                                 </div>
-                              )}
-
-                              <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-br from-white to-slate-50">
-                                 <ImageWithFallback
-                                    src={product.images?.[0]}
-                                    alt={product.name}
-                                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
-                                    skeletonAspectRatio="square"
-                                 />
-                              </div>
-                           </div>
-
-                           <div className="space-y-1 px-2">
-                              <h3 className="font-bold text-lg text-slate-900 truncate group-hover:text-blue-600 transition-colors">{product.name}</h3>
-                              <div className="flex items-baseline gap-2">
-                                 <span className="text-slate-900 font-bold">{formatCurrency(product.price, product.currency || 'USD')}</span>
-                                 {product.compareAtPrice && <span className="text-slate-400 text-sm line-through">{formatCurrency(product.compareAtPrice, product.currency || 'USD')}</span>}
-                              </div>
-                           </div>
-                           <Link href={`/${storeConfig.slug}/products/${product.slug}`} className="absolute inset-0 z-10" />
+         {
+            layout?.sections?.featuredProducts?.show !== false && (
+               <section
+                  data-section="featuredProducts"
+                  className="py-16 md:py-32 bg-white relative overflow-hidden"
+               >
+                  <div className="container mx-auto px-6 relative z-10">
+                     <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-6">
+                        <div className="max-w-2xl">
+                           <span className="text-blue-600 font-bold tracking-widest text-xs uppercase mb-3 block">Latest Drops</span>
+                           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
+                              {layout?.sections?.featuredProducts?.title || "Performance Redefined"}
+                           </h2>
                         </div>
-                     ))}
-                  </div>
-               </div>
-            </section>
-         )}
-
-         {/* Tech Features */}
-         {layout?.features?.show !== false && (
-            <section className="py-16 md:py-32 bg-slate-950 text-white relative overflow-hidden">
-               <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
-
-               <div className="container mx-auto px-6 relative z-10">
-                  <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-                     {[
-                        { icon: Cpu, title: "Neural Processing", desc: "Advanced AI capabilities built into every device for smarter performance." },
-                        { icon: Shield, title: "Military Grade", desc: "Tested against rigorous standards to ensure durability in any environment." },
-                        { icon: Zap, title: "Hyper Charge", desc: "Next-generation battery technology for all-day power in minutes." }
-                     ].map((feature, i) => (
-                        <div key={i} className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 p-8 rounded-[2rem] hover:bg-slate-800/50 transition-colors">
-                           <div className="w-14 h-14 rounded-2xl bg-blue-600/20 flex items-center justify-center mb-6 text-blue-400">
-                              {layout?.features?.showIcons !== false && <feature.icon className="h-7 w-7" />}
-                           </div>
-                           <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                           <p className="text-slate-400 leading-relaxed">{feature.desc}</p>
-                        </div>
-                     ))}
-                  </div>
-               </div>
-            </section>
-         )}
-
-         {/* Newsletter */}
-         {layout?.sections?.marketing?.showNewsletter !== false && (
-            <section className="py-16 md:py-32 bg-white">
-               <div className="container mx-auto px-6">
-                  <div className="bg-blue-600 rounded-[3rem] p-10 md:p-24 text-center relative overflow-hidden">
-                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600" />
-                     <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-
-                     <div className="relative z-10 max-w-2xl mx-auto space-y-8">
-                        <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">Stay Ahead of the Curve</h2>
-                        <p className="text-blue-100 text-lg">Join our exclusive community for early access to drops and special offers.</p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                           <input
-                              type="email"
-                              placeholder="Enter your email"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              className="flex-1 h-14 px-6 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-blue-200 focus:outline-none focus:bg-white/20 focus:border-white transition-all backdrop-blur-md"
-                           />
-                           <Button onClick={handleSubscribe} className="h-14 px-8 rounded-full bg-white text-blue-600 hover:bg-blue-50 font-bold text-lg shadow-xl">
-                              Subscribe
+                        <div className="flex gap-2">
+                           <Button variant="outline" size="icon" onClick={scrollLeft} className="rounded-full border-slate-200 hover:bg-slate-100 hover:text-slate-900">
+                              <ArrowRight className="h-5 w-5 rotate-180" />
+                           </Button>
+                           <Button variant="outline" size="icon" onClick={scrollRight} className="rounded-full border-slate-200 hover:bg-slate-100 hover:text-slate-900">
+                              <ArrowRight className="h-5 w-5" />
                            </Button>
                         </div>
                      </div>
+
+                     <div ref={scrollContainerRef} className="flex overflow-x-auto snap-x snap-mandatory gap-8 pb-12 -mx-6 px-6 scrollbar-hide">
+                        {products.map((product) => (
+                           <div key={product.id} className="min-w-[280px] md:min-w-[320px] snap-center group">
+                              <div className="relative aspect-[4/5] bg-slate-50 rounded-[2.5rem] overflow-hidden mb-6 border border-slate-100">
+                                 <div className="absolute top-4 left-4 z-20">
+                                    {product.compareAtPrice && (
+                                       <span className="bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-full">SALE</span>
+                                    )}
+                                 </div>
+                                 {layout?.sections?.featuredProducts?.showAddToCart !== false && (
+                                    <div className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                       <Button size="icon" onClick={(e) => handleAddToCart(e, product)} className="rounded-full bg-white text-slate-900 hover:bg-blue-600 hover:text-white shadow-lg">
+                                          <ShoppingCart className="h-4 w-4" />
+                                       </Button>
+                                    </div>
+                                 )}
+
+                                 <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-br from-white to-slate-50">
+                                    <ImageWithFallback
+                                       src={product.images?.[0]}
+                                       alt={product.name}
+                                       className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
+                                       skeletonAspectRatio="square"
+                                    />
+                                 </div>
+                              </div>
+
+                              <div className="space-y-1 px-2">
+                                 <h3 className="font-bold text-lg text-slate-900 truncate group-hover:text-blue-600 transition-colors">{product.name}</h3>
+                                 <div className="flex items-baseline gap-2">
+                                    <span className="text-slate-900 font-bold">{formatCurrency(product.price, product.currency || 'USD')}</span>
+                                    {product.compareAtPrice && <span className="text-slate-400 text-sm line-through">{formatCurrency(product.compareAtPrice, product.currency || 'USD')}</span>}
+                                 </div>
+                              </div>
+                              <Link href={`/${storeConfig.slug}/products/${product.slug}`} className="absolute inset-0 z-10" />
+                           </div>
+                        ))}
+                     </div>
                   </div>
-               </div>
-            </section>
-         )}
+               </section>
+            )
+         }
+
+         {/* Tech Features */}
+         {
+            layout?.features?.show !== false && (
+               <section
+                  data-section="features"
+                  className="py-16 md:py-32 bg-slate-950 text-white relative overflow-hidden"
+               >
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
+
+                  <div className="container mx-auto px-6 relative z-10">
+                     <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+                        {[
+                           { icon: Cpu, title: "Neural Processing", desc: "Advanced AI capabilities built into every device for smarter performance." },
+                           { icon: Shield, title: "Military Grade", desc: "Tested against rigorous standards to ensure durability in any environment." },
+                           { icon: Zap, title: "Hyper Charge", desc: "Next-generation battery technology for all-day power in minutes." }
+                        ].map((feature, i) => (
+                           <div key={i} className="bg-slate-900/50 backdrop-blur-sm border border-slate-800 p-8 rounded-[2rem] hover:bg-slate-800/50 transition-colors">
+                              <div className="w-14 h-14 rounded-2xl bg-blue-600/20 flex items-center justify-center mb-6 text-blue-400">
+                                 {layout?.features?.showIcons !== false && <feature.icon className="h-7 w-7" />}
+                              </div>
+                              <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+                              <p className="text-slate-400 leading-relaxed">{feature.desc}</p>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </section>
+            )
+         }
+
+         {/* Newsletter */}
+         {
+            layout?.sections?.marketing?.showNewsletter !== false && (
+               <section
+                  data-section="marketing"
+                  className="py-16 md:py-32 bg-white"
+               >
+                  <div className="container mx-auto px-6">
+                     <div className="bg-blue-600 rounded-[3rem] p-10 md:p-24 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600" />
+                        <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+                        <div className="relative z-10 max-w-2xl mx-auto space-y-8">
+                           <h2 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                              {layout?.sections?.marketing?.newsletterTitle || 'Stay Ahead of the Curve'}
+                           </h2>
+                           <p className="text-blue-100 text-lg">
+                              {layout?.sections?.marketing?.newsletterSubtitle || 'Join our exclusive community for early access to drops and special offers.'}
+                           </p>
+
+                           <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                              <input
+                                 type="email"
+                                 placeholder={layout?.sections?.marketing?.newsletterPlaceholder || 'Enter your email'}
+                                 value={email}
+                                 onChange={(e) => setEmail(e.target.value)}
+                                 className="flex-1 h-14 px-6 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-blue-200 focus:outline-none focus:bg-white/20 focus:border-white transition-all backdrop-blur-md"
+                              />
+                              <Button onClick={handleSubscribe} className="h-14 px-8 rounded-full bg-white text-blue-600 hover:bg-blue-50 font-bold text-lg shadow-xl">
+                                 {layout?.sections?.marketing?.newsletterButton || 'Subscribe'}
+                              </Button>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </section>
+            )
+         }
 
          {/* Promotional Banner */}
          <PromoBanner config={layout?.sections?.promoBanner} layoutStyle="electronics" />
 
          <ElectronicsStoreFooter storeConfig={storeConfig} />
 
-      </div>
+      </div >
    );
 }

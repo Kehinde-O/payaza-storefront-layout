@@ -29,6 +29,7 @@ interface StoreContextType {
     isInWishlist: (productId: string) => boolean;
     isWishlistLoading: boolean;
 }
+export declare const StoreContext: import("react").Context<StoreContextType>;
 export declare function StoreProvider({ children, storeSlug, initialConfig }: {
     children: React.ReactNode;
     storeSlug?: string;

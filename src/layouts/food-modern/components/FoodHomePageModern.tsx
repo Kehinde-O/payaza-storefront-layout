@@ -1,18 +1,15 @@
 'use client';
 
-import { StoreConfig, StoreProduct } from '@/lib/store-types';
+import { StoreConfig } from '@/lib/store-types';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { useToast } from '@/components/ui/toast';
 import { useStore } from '@/lib/store-context';
-import { Star, Clock, MapPin, ChefHat, ArrowRight, Instagram, Facebook, Twitter, Utensils, Search, Menu as MenuIcon, Calendar, Users, Mail, Phone, CheckCircle, Flame, Wine, Coffee, X } from 'lucide-react';
-import Link from 'next/link';
+import { Star, ArrowRight, Utensils, Calendar, Users, Mail, Phone, CheckCircle, Flame, Wine, Coffee, ChefHat, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/utils';
-import { getLayoutText, getBannerImage, getTextContent, getTeamMemberImage, getLogoUrl, getAssetUrl } from '@/lib/utils/asset-helpers';
-import { StoreLogo } from '@/components/ui/store-logos';
-import { shouldUseAPI } from '../../../lib/utils/demo-detection';
+import { getLayoutText, getBannerImage, shouldUseAPI, getAssetUrl } from '@/lib/utils/asset-helpers';
 import { VideoPlayer } from '../../../components/ui/video-player';
 import { PromoBanner } from '../../shared/components/PromoBanner';
 
@@ -26,22 +23,16 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
    const layoutConfig = storeConfig.layoutConfig;
    const { addToCart } = useStore();
    const { addToast } = useToast();
-   const [scrolled, setScrolled] = useState(false);
+   // const [scrolled, setScrolled] = useState(false); // Handled by Header
    const [isReservationOpen, setIsReservationOpen] = useState(false);
-   const [isMenuOpen, setIsMenuOpen] = useState(false);
+   // const [isMenuOpen, setIsMenuOpen] = useState(false); // Handled by Header
    const [reservationStep, setReservationStep] = useState(1);
    const [isSubmitting, setIsSubmitting] = useState(false);
    const [activeTab, setActiveTab] = useState('all');
-   const [isSearchOpen, setIsSearchOpen] = useState(false);
-   const [newsletterEmail, setNewsletterEmail] = useState('');
+   // const [isSearchOpen, setIsSearchOpen] = useState(false); // Handled by Header
+   // const [newsletterEmail, setNewsletterEmail] = useState(''); // Footer removed
 
-   useEffect(() => {
-      const handleScroll = () => {
-         setScrolled(window.scrollY > 50);
-      };
-      window.addEventListener('scroll', handleScroll);
-      return () => window.removeEventListener('scroll', handleScroll);
-   }, []);
+   // Scroll listener removed as it was for header transparency
 
    const handleReservationSubmit = (e: React.FormEvent) => {
       e.preventDefault();
@@ -70,7 +61,6 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
       : menuItems.filter(item => item.categoryId === activeTab);
 
    // Get testimonials from layoutConfig sections or use fallback
-   const isRealStore = shouldUseAPI(storeConfig.slug);
    const testimonialsSection = layoutConfig?.sections?.testimonials;
    const backendTestimonials = testimonialsSection?.items || [];
    const fallbackTestimonials = [
@@ -90,99 +80,16 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
       : fallbackTestimonials;
 
    return (
-      <div className="min-h-screen bg-[#0F0F0F] text-white font-sans selection:bg-orange-500 selection:text-white">
-         {/* Navigation Overlay */}
-         <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${scrolled ? 'bg-[#0F0F0F]/95 backdrop-blur-xl border-b border-white/5 py-4' : 'bg-transparent py-8'}`}>
-            <div className="container mx-auto px-6 flex items-center justify-between">
-               {/* Show logo if available, otherwise show store name */}
-               {getLogoUrl(storeConfig) ? (
-                  <Link href={`/${storeConfig.slug}`} className="relative z-50">
-                     <StoreLogo
-                        storeConfig={storeConfig}
-                        className="h-10 w-10 transition-all duration-300 hover:opacity-90"
-                        alt={storeConfig.name}
-                     />
-                  </Link>
-               ) : (
-                  <Link href={`/${storeConfig.slug}`} className="text-2xl font-black tracking-tighter uppercase relative z-50 group">
-                     {storeConfig.name}
-                     <span className="text-orange-500 group-hover:text-white transition-colors duration-300">.</span>
-                  </Link>
-               )}
-
-               <div className="hidden md:flex items-center gap-10 text-xs font-bold tracking-[0.2em] uppercase">
-                  <button onClick={scrollToMenu} className="hover:text-orange-500 transition-colors relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-orange-500 hover:after:w-full after:transition-all">Menu</button>
-                  <button onClick={() => setIsReservationOpen(true)} className="hover:text-orange-500 transition-colors relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-orange-500 hover:after:w-full after:transition-all">Reservations</button>
-                  <Link href={`/${storeConfig.slug}/about`} className="hover:text-orange-500 transition-colors relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-orange-500 hover:after:w-full after:transition-all">Story</Link>
-                  <Link href={`/${storeConfig.slug}/contact`} className="hover:text-orange-500 transition-colors relative after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-orange-500 hover:after:w-full after:transition-all">Contact</Link>
-               </div>
-
-               <div className="flex items-center gap-6">
-                  <Button variant="ghost" size="icon" className="text-white hover:text-orange-500 hover:bg-white/5 rounded-full md:hidden" onClick={() => setIsMenuOpen(true)}>
-                     <MenuIcon className="h-6 w-6" />
-                  </Button>
-                  {storeConfig.features.search && (
-                     <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)} className="text-white hover:text-orange-500 hover:bg-white/5 rounded-full hidden md:flex">
-                        <Search className="h-5 w-5" />
-                     </Button>
-                  )}
-                  <Button
-                     onClick={() => setIsReservationOpen(true)}
-                     className="bg-white text-black hover:bg-orange-500 hover:text-white rounded-full px-8 font-bold uppercase tracking-wider text-xs h-10 transition-all duration-300 hidden sm:flex"
-                  >
-                     Book Table
-                  </Button>
-               </div>
-            </div>
-         </nav>
-
-         {/* Search Overlay */}
-         {isSearchOpen && storeConfig.features.search && (
-            <div className="fixed inset-0 z-50 bg-[#0F0F0F]/98 backdrop-blur-xl pt-20">
-               <div className="container mx-auto px-6">
-                  <div className="relative max-w-2xl mx-auto">
-                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400" />
-                     <input
-                        type="text"
-                        placeholder={getLayoutText(storeConfig, 'header.searchPlaceholder', 'Search menu items...')}
-                        autoFocus
-                        className="w-full pl-14 pr-4 py-6 text-xl bg-transparent border-b-2 border-orange-500/50 text-white focus:outline-none focus:border-orange-500"
-                        onBlur={() => setIsSearchOpen(false)}
-                     />
-                  </div>
-               </div>
-            </div>
-         )}
-
-         {/* Mobile Menu Overlay */}
-         <div className={`fixed inset-0 z-50 bg-[#0F0F0F] transition-transform duration-500 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-            <div className="flex flex-col h-full p-8">
-               <div className="flex justify-between items-center mb-12">
-                  {/* Only show store name if no custom logo is present */}
-                  {!getLogoUrl(storeConfig) ? (
-                     <span className="text-2xl font-black uppercase">{storeConfig.name}<span className="text-orange-500">.</span></span>
-                  ) : (
-                     <StoreLogo
-                        storeConfig={storeConfig}
-                        className="h-10 w-10"
-                        alt={storeConfig.name}
-                     />
-                  )}
-                  <button onClick={() => setIsMenuOpen(false)} className="text-white hover:text-orange-500">
-                     <X className="h-8 w-8" />
-                  </button>
-               </div>
-               <div className="flex flex-col gap-8 text-2xl font-black uppercase tracking-tight">
-                  <button onClick={() => { scrollToMenu(); setIsMenuOpen(false); }} className="text-left hover:text-orange-500">Menu</button>
-                  <button onClick={() => { setIsReservationOpen(true); setIsMenuOpen(false); }} className="text-left hover:text-orange-500">Reservations</button>
-                  <Link href={`/${storeConfig.slug}/about`} onClick={() => setIsMenuOpen(false)} className="hover:text-orange-500">Story</Link>
-                  <Link href={`/${storeConfig.slug}/contact`} onClick={() => setIsMenuOpen(false)} className="hover:text-orange-500">Contact</Link>
-               </div>
-            </div>
-         </div>
+      <div className="bg-[#0F0F0F] text-white font-sans selection:bg-orange-500 selection:text-white">
+         {/* Navigation Overlay - Removed (Handled by Wrapper) */}
+         {/* Search Overlay - Removed (Handled by Wrapper) */}
+         {/* Mobile Menu Overlay - Removed (Handled by Wrapper) */}
 
          {/* Hero Section - Video Background */}
-         <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
+         <section
+            data-section="hero"
+            className="relative h-screen w-full overflow-hidden flex items-center justify-center bg-[#0F0F0F]"
+         >
             <div className="absolute inset-0 z-0">
                <VideoPlayer
                   src={getAssetUrl(storeConfig, 'hero_video', "https://cdn.coverr.co/videos/coverr-chef-preparing-food-in-kitchen-5379/1080p.mp4")}
@@ -332,7 +239,7 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     // Adapt menu item to product for cart
-                                    const product: StoreProduct = {
+                                    const product = {
                                        ...item,
                                        slug: item.id,
                                        images: item.image ? [item.image] : [],
@@ -353,7 +260,7 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
                               onClick={(e) => {
                                  e.preventDefault();
                                  e.stopPropagation();
-                                 const product: StoreProduct = {
+                                 const product = {
                                     ...item,
                                     slug: item.id,
                                     images: item.image ? [item.image] : [],
@@ -435,157 +342,9 @@ export function FoodHomePageModern({ storeConfig }: FoodHomePageModernProps) {
             </div>
          </section>
 
-         {/* Modern Footer */}
-         <footer className="bg-black pt-24 pb-12 border-t border-white/5">
-            <div className="container mx-auto px-6">
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20">
-                  <div className="space-y-8">
-                     <Link href={`/${storeConfig.slug}`} className="text-3xl font-black tracking-tighter uppercase block">
-                        {storeConfig.name}<span className="text-orange-500">.</span>
-                     </Link>
-                     <p className="text-gray-500 leading-relaxed text-sm">
-                        {storeConfig.description || getLayoutText(storeConfig, 'footer.description', 'Redefining the art of dining through innovation, passion, and uncompromising quality.')}
-                     </p>
-                     {(storeConfig.branding.socialMedia || storeConfig.socialLinks) && (
-                        <div className="flex gap-4">
-                           {(storeConfig.branding.socialMedia?.instagram || storeConfig.socialLinks?.instagram) && (
-                              <a href={storeConfig.branding.socialMedia?.instagram || storeConfig.socialLinks?.instagram || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all rounded-full">
-                                 <Instagram className="h-4 w-4" />
-                              </a>
-                           )}
-                           {(storeConfig.branding.socialMedia?.facebook || storeConfig.socialLinks?.facebook) && (
-                              <a href={storeConfig.branding.socialMedia?.facebook || storeConfig.socialLinks?.facebook || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all rounded-full">
-                                 <Facebook className="h-4 w-4" />
-                              </a>
-                           )}
-                           {(storeConfig.branding.socialMedia?.twitter || storeConfig.socialLinks?.twitter) && (
-                              <a href={storeConfig.branding.socialMedia?.twitter || storeConfig.socialLinks?.twitter || '#'} target="_blank" rel="noopener noreferrer" className="w-10 h-10 border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:border-orange-500 hover:text-white transition-all rounded-full">
-                                 <Twitter className="h-4 w-4" />
-                              </a>
-                           )}
-                        </div>
-                     )}
-                  </div>
+         {/* Modern Footer - Removed (Handled by Wrapper) */}
 
-                  <div>
-                     <h4 className="text-sm font-bold uppercase tracking-[0.2em] mb-8 text-white">
-                        {getLayoutText(storeConfig, 'footer.quickLinks.title', 'Quick Links')}
-                     </h4>
-                     <ul className="space-y-4 text-gray-500 text-sm">
-                        {storeConfig.navigation?.footer && storeConfig.navigation.footer.length > 0 ? (
-                           storeConfig.navigation.footer.map((section, idx) => (
-                              section.links?.map((link, linkIdx) => (
-                                 <li key={`${idx}-${linkIdx}`}>
-                                    <Link href={link.href} className="hover:text-orange-500 transition-colors">{link.label}</Link>
-                                 </li>
-                              ))
-                           )).flat()
-                        ) : (
-                           <>
-                              <li><Link href={`/${storeConfig.slug}/menu`} className="hover:text-orange-500 transition-colors">{getLayoutText(storeConfig, 'footer.quickLinks.menu', 'Our Menu')}</Link></li>
-                              <li><button onClick={() => setIsReservationOpen(true)} className="hover:text-orange-500 transition-colors text-left">{getLayoutText(storeConfig, 'footer.quickLinks.reservations', 'Reservations')}</button></li>
-                              <li><Link href={`/${storeConfig.slug}/contact`} className="hover:text-orange-500 transition-colors">{getLayoutText(storeConfig, 'footer.quickLinks.privateDining', 'Private Dining')}</Link></li>
-                              <li><Link href={`/${storeConfig.slug}/contact`} className="hover:text-orange-500 transition-colors">{getLayoutText(storeConfig, 'footer.quickLinks.giftCards', 'Gift Cards')}</Link></li>
-                           </>
-                        )}
-                     </ul>
-                  </div>
-
-                  <div>
-                     <h4 className="text-sm font-bold uppercase tracking-[0.2em] mb-8 text-white">
-                        {getLayoutText(storeConfig, 'footer.contact.title', 'Contact')}
-                     </h4>
-                     <ul className="space-y-4 text-gray-500 text-sm">
-                        {storeConfig.contactInfo?.address && (
-                           (storeConfig.contactInfo.address.street ||
-                              storeConfig.contactInfo.address.city ||
-                              storeConfig.contactInfo.address.state ||
-                              storeConfig.contactInfo.address.zipCode) && (
-                              <li className="flex items-start gap-3">
-                                 <MapPin className="h-5 w-5 text-orange-500 mt-1 shrink-0" />
-                                 <span>
-                                    {storeConfig.contactInfo.address.street && `${storeConfig.contactInfo.address.street}, `}
-                                    {storeConfig.contactInfo.address.city && `${storeConfig.contactInfo.address.city}, `}
-                                    {storeConfig.contactInfo.address.state && `${storeConfig.contactInfo.address.state} `}
-                                    {storeConfig.contactInfo.address.zipCode && storeConfig.contactInfo.address.zipCode}
-                                 </span>
-                              </li>
-                           )
-                        )}
-                        {storeConfig.contactInfo?.phone && (
-                           <li className="flex items-center gap-3">
-                              <Phone className="h-5 w-5 text-orange-500 shrink-0" />
-                              <a href={`tel:${storeConfig.contactInfo.phone}`} className="hover:text-orange-500 transition-colors">{storeConfig.contactInfo.phone}</a>
-                           </li>
-                        )}
-                        {storeConfig.contactInfo?.email && (
-                           <li className="flex items-center gap-3">
-                              <Mail className="h-5 w-5 text-orange-500 shrink-0" />
-                              <a href={`mailto:${storeConfig.contactInfo.email}`} className="hover:text-orange-500 transition-colors">{storeConfig.contactInfo.email}</a>
-                           </li>
-                        )}
-                        {storeConfig.locations && storeConfig.locations.length > 0 && storeConfig.locations[0].openingHours && (
-                           <li className="flex items-center gap-3">
-                              <Clock className="h-5 w-5 text-orange-500 shrink-0" />
-                              <span>{storeConfig.locations[0].openingHours}</span>
-                           </li>
-                        )}
-                        {!storeConfig.contactInfo?.address && !storeConfig.contactInfo?.phone && !storeConfig.contactInfo?.email && (!storeConfig.locations || storeConfig.locations.length === 0 || !storeConfig.locations[0].openingHours) && (
-                           <li className="flex items-center gap-3">
-                              <Clock className="h-5 w-5 text-orange-500 shrink-0" />
-                              <span>{getLayoutText(storeConfig, 'footer.contact.openingHours', 'Mon-Sun: 11am - 11pm')}</span>
-                           </li>
-                        )}
-                     </ul>
-                  </div>
-
-                  <div>
-                     <h4 className="text-sm font-bold uppercase tracking-[0.2em] mb-8 text-white">
-                        {getLayoutText(storeConfig, 'footer.newsletter.title', 'Newsletter')}
-                     </h4>
-                     <p className="text-gray-500 mb-6 text-sm">
-                        {getLayoutText(storeConfig, 'footer.newsletter.description', getLayoutText(storeConfig, 'sections.marketing.newsletter.subtitle', 'Subscribe for seasonal updates and exclusive invitations.'))}
-                     </p>
-                     <form onSubmit={async (e) => {
-                        e.preventDefault();
-                        if (newsletterEmail && newsletterEmail.includes('@')) {
-                           await new Promise(resolve => setTimeout(resolve, 500));
-                           addToast('Thank you for subscribing!', 'success');
-                           setNewsletterEmail('');
-                        }
-                     }} className="flex border-b border-white/20 pb-2">
-                        <input
-                           type="email"
-                           placeholder={getLayoutText(storeConfig, 'footer.newsletter.placeholder', getLayoutText(storeConfig, 'sections.marketing.newsletter.placeholder', 'Email Address'))}
-                           value={newsletterEmail}
-                           onChange={(e) => setNewsletterEmail(e.target.value)}
-                           required
-                           className="bg-transparent border-none outline-none text-white w-full placeholder:text-gray-600 text-sm"
-                        />
-                        <button type="submit" className="text-orange-500 font-bold uppercase text-xs hover:text-white transition-colors">
-                           {getLayoutText(storeConfig, 'footer.newsletter.button', getLayoutText(storeConfig, 'sections.marketing.newsletter.button', 'Join'))}
-                        </button>
-                     </form>
-                  </div>
-               </div>
-
-               <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600 uppercase tracking-wider">
-                  <p>
-                     {getLayoutText(storeConfig, 'footer.copyright', `© ${new Date().getFullYear()} ${storeConfig.name}. All rights reserved.`)}
-                  </p>
-                  <div className="flex gap-8">
-                     <Link href={`/${storeConfig.slug}/privacy`} className="hover:text-white transition-colors">
-                        {getLayoutText(storeConfig, 'footer.privacyPolicy', 'Privacy Policy')}
-                     </Link>
-                     <Link href={`/${storeConfig.slug}/terms`} className="hover:text-white transition-colors">
-                        {getLayoutText(storeConfig, 'footer.termsOfService', 'Terms of Service')}
-                     </Link>
-                  </div>
-               </div>
-            </div>
-         </footer>
-
-         {/* Reservation Modal */}
+         {/* Reservation Modal - Kept for Hero CTA */}
          <Modal isOpen={isReservationOpen} onClose={closeReservation} title="Table Reservation" className="bg-[#1A1A1A] text-white border border-white/10 rounded-none">
             {reservationStep === 1 ? (
                <form onSubmit={handleReservationSubmit} className="space-y-6">

@@ -11,6 +11,7 @@ interface ToastContextType {
     addToast: (message: string, type?: ToastType, duration?: number) => void;
     removeToast: (id: string) => void;
 }
+export declare const ToastContext: React.Context<ToastContextType>;
 export declare function ToastProvider({ children }: {
     children: React.ReactNode;
 }): import("react/jsx-runtime").JSX.Element;

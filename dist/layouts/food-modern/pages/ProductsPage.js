@@ -4,190 +4,70 @@ import { Button } from '../../../components/ui/button';
 import { Breadcrumbs } from '../../../components/ui/breadcrumbs';
 import { Sheet } from '../../../components/ui/sheet';
 import { ImageWithFallback } from '../../../components/ui/image-with-fallback';
-import { ProductCard } from '../../../components/ui/product-card';
 import { ProductGridSkeleton } from '../../../components/ui/skeletons';
-import { CategoryTree } from '../../../components/ui/category-tree';
 import { useStore } from '../../../lib/store-context';
 import { useToast } from '../../../components/ui/toast';
 import { useLoading } from '../../../lib/loading-context';
 import { useAnalytics } from '../../../hooks/use-analytics';
-import { ChevronDown, ChevronUp, Star, Check, Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
+import { Check, Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useState, useMemo, useEffect, Suspense } from 'react';
-import { formatCurrency, filterActiveProducts } from '../../../lib/utils';
-import { getAllCategoryIds, flattenCategoryTree, buildCategoryTree } from '../../../lib/utils/category-tree';
+import { formatCurrency } from '../../../lib/utils';
 import { getBannerImage, getLayoutText } from '../../../lib/utils/asset-helpers';
 import { shouldUseAPI } from '../../../lib/utils/demo-detection';
-function ProductsPageContent({ storeConfig }) {
+function ProductsPageContent({ storeConfig: initialConfig }) {
+    const { store, addToCart } = useStore();
+    const storeConfig = store || initialConfig;
     const searchParams = useSearchParams();
     const categoryParam = searchParams.get('category');
-    const [products, setProducts] = useState(() => {
-        // Filter out inactive/deleted products first
-        let initialProducts = filterActiveProducts(storeConfig.products || []);
-        // Ensure all products have unique IDs just in case mock data has duplicates
-        // or if we are artificially duplicating for grid demo
-        if (initialProducts.length > 0) {
-            // If very few products, duplicate them to show grid structure
-            if (initialProducts.length < 4) {
-                initialProducts = [...initialProducts, ...initialProducts].map((p, i) => ({
-                    ...p,
-                    id: `${p.id}-copy-${i}`,
-                    name: `${p.name} ${i > 0 ? '(Copy)' : ''}`
-                }));
-            }
-            else {
-                // Even if enough products, ensure IDs are unique strings
-                // (Mock data usually is fine, but this is a safeguard)
-                const seenIds = new Set();
-                initialProducts = initialProducts.map((p, i) => {
-                    if (seenIds.has(p.id)) {
-                        return { ...p, id: `${p.id}-${i}` };
-                    }
-                    seenIds.add(p.id);
-                    return p;
-                });
-            }
-        }
-        return initialProducts;
-    });
-    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+    const menuItems = storeConfig.menuItems || [];
     const categories = storeConfig.categories || [];
-    // Update products when storeConfig.products changes (e.g., after async load)
-    useEffect(() => {
-        if (storeConfig.products && storeConfig.products.length > 0) {
-            setProducts(storeConfig.products);
-        }
-        else if (storeConfig.products && storeConfig.products.length === 0 && !isLoadingProducts) {
-            // If products array is empty, try to fetch from API
-            const fetchProducts = async () => {
-                setIsLoadingProducts(true);
-                startBackendLoading();
-                try {
-                    const { productService } = await import('../../../lib/services/product.service');
-                    const { transformProductToStoreProduct } = await import('../../../lib/store-config-utils');
-                    const response = await productService.getProducts({
-                        storeId: storeConfig.id,
-                        limit: 1000,
-                    });
-                    const fetchedProducts = response.data.map(transformProductToStoreProduct);
-                    setProducts(fetchedProducts);
-                }
-                catch (error) {
-                    console.error('Failed to fetch products:', error);
-                    // Keep empty array on error
-                }
-                finally {
-                    setIsLoadingProducts(false);
-                    stopBackendLoading();
-                }
-            };
-            fetchProducts();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storeConfig.products, storeConfig.id]); // Removed isLoadingProducts from deps to prevent infinite loops
-    const { addToCart } = useStore();
     const { addToast } = useToast();
     const { startBackendLoading, stopBackendLoading } = useLoading();
     const { trackEvent } = useAnalytics();
+    const productsConfig = storeConfig.layoutConfig?.pages?.products;
     // State for filters & sort
-    const [selectedBrands, setSelectedBrands] = useState([]);
     const [selectedCategories, setSelectedCategories] = useState([]);
-    const [priceRange, setPriceRange] = useState([0, 5000]);
+    const [priceRange, setPriceRange] = useState([0, 100]);
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
     // Initialize filters from URL
     useEffect(() => {
         if (categoryParam) {
             setSelectedCategoryFilter(categoryParam);
         }
     }, [categoryParam]);
-    const [minRating, setMinRating] = useState(null);
-    const [showInStockOnly, setShowInStockOnly] = useState(false);
-    const [showMoreBrands, setShowMoreBrands] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [sortBy, setSortBy] = useState('featured');
     const [visibleProducts, setVisibleProducts] = useState(12);
     const [isFiltering, setIsFiltering] = useState(false);
-    // Extract unique brands
-    const brands = useMemo(() => {
-        const brandSet = new Set();
-        products.forEach(product => {
-            // First check specifications for Brand
-            if (product.specifications?.Brand) {
-                brandSet.add(product.specifications.Brand);
-            }
-            else {
-                // Fallback to regex matching common brand names
-                const brandMatch = product.name.match(/\b(Reebok|Nike|Adidas|Puma|Zara|Dickies|Vans|Uniqlo|New Balance|Converse|Sony|Samsung|Apple|Dell|HP|Gucci|Prada|Versace|Armani|Calvin Klein|Tommy Hilfiger|Levi's|Gap|H&M|Forever 21|ASOS|Shein|Amazon|Microsoft|LG|Canon|Nikon|Bose|JBL|Beats|Ray-Ban|Oakley)\b/i);
-                if (brandMatch) {
-                    brandSet.add(brandMatch[1]);
-                }
-            }
-        });
-        return Array.from(brandSet).sort();
-    }, [products]);
     // Track filter changes and show loading
     useEffect(() => {
         setIsFiltering(true);
         const timer = setTimeout(() => setIsFiltering(false), 300);
         return () => clearTimeout(timer);
-    }, [selectedBrands, selectedCategories, priceRange, selectedCategoryFilter, minRating, showInStockOnly, sortBy]);
-    // Build category tree for filtering
-    const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
-    // Get all category IDs to filter (including children of selected parent categories)
-    const effectiveCategoryIds = useMemo(() => {
-        if (selectedCategories.length === 0)
-            return [];
-        const allIds = new Set();
-        const flatCategories = flattenCategoryTree(categoryTree);
-        selectedCategories.forEach(selectedId => {
-            allIds.add(selectedId);
-            // Find the category and add all its children
-            const category = flatCategories.find(c => c.id === selectedId);
-            if (category) {
-                const childIds = getAllCategoryIds(category);
-                childIds.forEach(id => allIds.add(id));
-            }
-        });
-        return Array.from(allIds);
-    }, [selectedCategories, categoryTree]);
+    }, [selectedCategories, priceRange, selectedCategoryFilter, sortBy, searchQuery]);
     // Filter & Sort Logic
-    const filteredAndSortedProducts = useMemo(() => {
-        let result = products.filter(product => {
-            // Brand filter
-            if (selectedBrands.length > 0) {
-                const productBrand = product.specifications?.Brand ||
-                    product.name.match(/\b(Reebok|Nike|Adidas|Puma|Zara|Dickies|Vans|Uniqlo|New Balance|Converse|Sony|Samsung|Apple|Dell|HP|Gucci|Prada|Versace|Armani|Calvin Klein|Tommy Hilfiger|Levi's|Gap|H&M|Forever 21|ASOS|Shein|Amazon|Microsoft|LG|Canon|Nikon|Bose|JBL|Beats|Ray-Ban|Oakley)\b/i)?.[1];
-                if (!productBrand || !selectedBrands.includes(productBrand)) {
-                    return false;
-                }
+    const filteredAndSortedItems = useMemo(() => {
+        let result = menuItems.filter(item => {
+            // Search Filter
+            if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase()) && !item.description.toLowerCase().includes(searchQuery.toLowerCase())) {
+                return false;
             }
-            // Category filter (Sidebar) - includes parent and child categories
-            if (effectiveCategoryIds.length > 0) {
-                if (!effectiveCategoryIds.includes(product.categoryId)) {
+            // Category filter (Sidebar)
+            if (selectedCategories.length > 0) {
+                if (!selectedCategories.includes(item.categoryId)) {
                     return false;
                 }
             }
             // Price filter
-            if (product.price < priceRange[0] || product.price > priceRange[1]) {
+            if (item.price < priceRange[0] || item.price > priceRange[1]) {
                 return false;
             }
             // Category Filter (Top Buttons)
             if (selectedCategoryFilter) {
                 const category = categories.find(c => c.slug === selectedCategoryFilter);
-                if (category && product.categoryId !== category.id) {
-                    return false;
-                }
-            }
-            // Rating Filter
-            if (minRating !== null) {
-                const productRating = product.rating || 0;
-                if (productRating < minRating) {
-                    return false;
-                }
-            }
-            // Availability Filter
-            if (showInStockOnly) {
-                if (!product.inStock) {
+                if (category && item.categoryId !== category.id) {
                     return false;
                 }
             }
@@ -201,41 +81,38 @@ function ProductsPageContent({ storeConfig }) {
             case 'price-desc':
                 result.sort((a, b) => b.price - a.price);
                 break;
-            case 'newest':
-                // Simulating newness by ID or reverse original order
-                result.reverse();
-                break;
-            case 'rating':
-                result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-                break;
             default:
                 // Featured - keep original order
                 break;
         }
         return result;
-    }, [products, selectedBrands, effectiveCategoryIds, priceRange, selectedCategoryFilter, minRating, showInStockOnly, sortBy, categories]);
-    const displayedProducts = filteredAndSortedProducts.slice(0, visibleProducts);
-    const hasMore = visibleProducts < filteredAndSortedProducts.length;
-    const handleAddToCart = (product) => {
+    }, [menuItems, selectedCategories, priceRange, selectedCategoryFilter, sortBy, searchQuery, categories]);
+    const displayedItems = filteredAndSortedItems.slice(0, visibleProducts);
+    const hasMore = visibleProducts < filteredAndSortedItems.length;
+    const handleAddToCart = (item) => {
+        const product = {
+            ...item,
+            slug: item.id,
+            images: item.image ? [item.image] : [],
+            variants: [],
+            specifications: {},
+            rating: 0,
+            reviewCount: 0,
+            categoryId: item.categoryId || '',
+            inStock: true
+        };
         addToCart(product);
-        addToast(`${product.name} added to cart`, 'success');
-    };
-    const handleQuickView = (product) => {
-        addToast(`Quick view for ${product.name}`, 'info');
+        addToast(`${item.name} added to order`, 'success');
     };
     const clearAllFilters = () => {
-        setSelectedBrands([]);
         setSelectedCategories([]);
-        setPriceRange([0, 5000]);
+        setPriceRange([0, 100]);
         setSelectedCategoryFilter(null);
-        setMinRating(null);
-        setShowInStockOnly(false);
+        setSearchQuery('');
     };
-    const hasActiveFilters = selectedBrands.length > 0 ||
-        selectedCategories.length > 0 ||
-        priceRange[1] < 5000 ||
-        minRating !== null ||
-        showInStockOnly;
+    const hasActiveFilters = selectedCategories.length > 0 ||
+        priceRange[1] < 100 ||
+        searchQuery !== '';
     // Breadcrumbs
     const breadcrumbItems = [
         { label: storeConfig.name, href: `/${storeConfig.slug}` },
@@ -282,15 +159,7 @@ function ProductsPageContent({ storeConfig }) {
                                     ? 'bg-gray-900 text-white hover:bg-blue-600'
                                     : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`, children: "All" }), categories.map((category) => (_jsx("button", { onClick: () => setSelectedCategoryFilter(selectedCategoryFilter === category.slug ? null : category.slug), className: `px-6 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${selectedCategoryFilter === category.slug
                                     ? 'bg-gray-900 text-white hover:bg-blue-600'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`, children: category.name }, category.id)))] }), _jsxs("div", { id: "product-grid", className: "grid grid-cols-1 lg:grid-cols-4 gap-8", children: [_jsxs("aside", { className: "hidden lg:block col-span-1 space-y-8 sticky top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent", children: [_jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-gray-100", children: [_jsx("h2", { className: "text-xl font-bold text-gray-900", children: "Filters" }), hasActiveFilters && (_jsxs("button", { onClick: clearAllFilters, className: "text-xs font-medium text-red-500 hover:text-red-700 flex items-center gap-1", children: [_jsx(RotateCcw, { className: "h-3 w-3" }), " Reset"] }))] }), _jsxs("div", { children: [_jsx("h3", { className: "text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4", children: "Availability" }), _jsxs("label", { className: "flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-lg hover:bg-gray-50 transition-colors", children: [_jsx("div", { className: `w-5 h-5 rounded border flex items-center justify-center transition-colors ${showInStockOnly ? 'bg-black border-black' : 'border-gray-300 group-hover:border-black'}`, children: showInStockOnly && _jsx(Check, { className: "h-3 w-3 text-white" }) }), _jsx("input", { type: "checkbox", className: "hidden", checked: showInStockOnly, onChange: () => setShowInStockOnly(!showInStockOnly) }), _jsx("span", { className: "text-sm text-gray-700 font-medium", children: "In Stock Only" })] })] }), _jsxs("div", { children: [_jsxs("div", { className: "flex items-center justify-between mb-4", children: [_jsx("h3", { className: "text-sm font-semibold text-gray-900 uppercase tracking-wide", children: "Brand" }), selectedBrands.length > 0 && (_jsx("button", { onClick: () => setSelectedBrands([]), className: "text-xs text-gray-600 hover:text-blue-600 font-medium transition-colors", children: "Clear" }))] }), brands.length > 0 ? (_jsxs("div", { className: "space-y-2", children: [(showMoreBrands ? brands : brands.slice(0, 6)).map((brand) => (_jsx("label", { className: "flex items-center justify-between cursor-pointer group hover:bg-blue-50 hover:text-blue-600 p-2 rounded-lg -ml-2 -mr-2 transition-colors", children: _jsxs("div", { className: "flex items-center gap-3", children: [_jsx("input", { type: "checkbox", checked: selectedBrands.includes(brand), onChange: () => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]), className: "w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" }), _jsx("span", { className: "text-sm text-gray-700 font-medium group-hover:text-blue-600", children: brand })] }) }, brand))), brands.length > 6 && (_jsx("button", { onClick: () => setShowMoreBrands(!showMoreBrands), className: "text-sm text-gray-600 hover:text-blue-600 font-medium mt-2 flex items-center gap-1 transition-colors", children: showMoreBrands ? _jsxs(_Fragment, { children: ["Show less ", _jsx(ChevronUp, { className: "h-4 w-4" })] }) : _jsxs(_Fragment, { children: ["Show more ", _jsx(ChevronDown, { className: "h-4 w-4" })] }) }))] })) : (_jsx("p", { className: "text-xs text-gray-500 italic", children: "No brands available" }))] }), _jsxs("div", { children: [_jsx("h3", { className: "text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4", children: "Category" }), _jsx(CategoryTree, { categories: categories, selectedCategoryIds: selectedCategories, onCategoryToggle: (categoryId, isSelected) => {
-                                                    setSelectedCategories(prev => isSelected
-                                                        ? [...prev, categoryId]
-                                                        : prev.filter(id => id !== categoryId));
-                                                }, mode: "checkbox" })] }), _jsxs("div", { children: [_jsxs("div", { className: "flex items-center justify-between mb-4", children: [_jsx("h3", { className: "text-sm font-semibold text-gray-900 uppercase tracking-wide", children: "Price Range" }), (priceRange[0] > 0 || priceRange[1] < 5000) && (_jsx("button", { onClick: () => setPriceRange([0, 5000]), className: "text-xs text-gray-600 hover:text-blue-600 font-medium transition-colors", children: "Reset" }))] }), _jsxs("div", { className: "space-y-4", children: [_jsx("div", { className: "flex items-center gap-2", children: _jsx("input", { type: "range", min: "0", max: "5000", step: "50", value: priceRange[1], onChange: (e) => setPriceRange([priceRange[0], parseInt(e.target.value)]), className: "flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900" }) }), _jsxs("div", { className: "flex items-center justify-between text-sm font-medium", children: [_jsx("span", { className: "text-gray-900", children: formatCurrency(priceRange[0], storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }), _jsx("span", { className: "text-gray-900", children: formatCurrency(priceRange[1], storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) })] }), _jsxs("div", { className: "grid grid-cols-2 gap-2", children: [_jsx("button", { onClick: () => setPriceRange([0, 100]), className: "px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", children: "$0 - $100" }), _jsx("button", { onClick: () => setPriceRange([0, 500]), className: "px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors", children: "$0 - $500" })] })] })] }), _jsxs("div", { children: [_jsx("h3", { className: "text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4", children: "Rating" }), _jsx("div", { className: "space-y-2", children: [4, 3, 2, 1].map((rating) => (_jsxs("label", { className: "flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors", children: [_jsx("div", { className: `w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${minRating === rating ? 'border-blue-600 bg-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`, children: minRating === rating && _jsx("div", { className: "w-2.5 h-2.5 bg-white rounded-full" }) }), _jsx("input", { type: "radio", name: "rating", checked: minRating === rating, onChange: () => setMinRating(minRating === rating ? null : rating), className: "hidden" }), _jsxs("div", { className: "flex items-center gap-1", children: [_jsx("div", { className: "flex text-yellow-400", children: Array.from({ length: 5 }).map((_, i) => (_jsx(Star, { className: `h-3.5 w-3.5 ${i < rating ? 'fill-current' : 'text-gray-200 fill-gray-200'}` }, i))) }), _jsx("span", { className: "text-sm text-gray-600", children: "& Up" })] })] }, rating))) })] })] }), _jsxs("div", { className: "lg:col-span-3", children: [_jsxs("div", { className: "lg:hidden mb-6 flex items-center justify-between", children: [_jsxs(Button, { onClick: () => setIsFilterOpen(true), variant: "outline", className: "flex items-center gap-2", children: [_jsx(SlidersHorizontal, { className: "h-4 w-4" }), " Filters"] }), _jsxs("select", { value: sortBy, onChange: (e) => setSortBy(e.target.value), className: "bg-transparent text-sm font-medium text-gray-700 focus:outline-none", children: [_jsx("option", { value: "featured", children: "Sort by: Featured" }), _jsx("option", { value: "newest", children: "Sort by: Newest" }), _jsx("option", { value: "price-asc", children: "Sort by: Price Low-High" }), _jsx("option", { value: "price-desc", children: "Sort by: Price High-Low" })] })] }), _jsxs("div", { className: "hidden lg:flex items-center justify-between mb-6", children: [_jsxs("p", { className: "text-sm text-gray-600", children: ["Showing ", _jsx("span", { className: "font-semibold text-gray-900", children: filteredAndSortedProducts.length }), " products"] }), _jsxs("div", { className: "flex items-center gap-2", children: [_jsx("span", { className: "text-sm text-gray-500", children: "Sort by:" }), _jsxs("select", { value: sortBy, onChange: (e) => setSortBy(e.target.value), className: "bg-transparent text-sm font-medium text-gray-900 focus:outline-none cursor-pointer hover:text-blue-600 transition-colors", children: [_jsx("option", { value: "featured", children: "Featured" }), _jsx("option", { value: "newest", children: "Newest Arrivals" }), _jsx("option", { value: "price-asc", children: "Price: Low to High" }), _jsx("option", { value: "price-desc", children: "Price: High to Low" }), _jsx("option", { value: "rating", children: "Top Rated" })] })] })] }), isLoadingProducts || isFiltering ? (_jsx(ProductGridSkeleton, { count: 12, columns: 3 })) : displayedProducts.length > 0 ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6", children: displayedProducts.map((product) => (_jsx(ProductCard, { product: product, storeSlug: storeConfig.slug, onAddToCart: handleAddToCart, onQuickView: handleQuickView }, product.id))) }), hasMore && (_jsx("div", { className: "mt-12 text-center", children: _jsx(Button, { onClick: () => setVisibleProducts(prev => prev + 12), variant: "outline", className: "min-w-[200px]", children: "Load More" }) }))] })) : (_jsxs("div", { className: "flex flex-col items-center justify-center py-20 bg-white rounded-lg border border-dashed border-gray-200 text-center", children: [_jsx("div", { className: "w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-400", children: _jsx(Search, { className: "h-6 w-6" }) }), _jsx("h3", { className: "text-lg font-semibold text-gray-900 mb-1", children: "No products found" }), _jsx("p", { className: "text-sm text-gray-500 mb-6", children: "Try adjusting your filters or search criteria." }), _jsx(Button, { onClick: clearAllFilters, variant: "outline", children: "Clear All Filters" })] }))] })] })] }), _jsxs(Sheet, { isOpen: isFilterOpen, onClose: () => setIsFilterOpen(false), title: "Filters", side: "right", children: [_jsxs("div", { className: "flex flex-col h-full overflow-y-auto pb-20 space-y-8 p-1", children: [_jsxs("div", { className: "pb-6 border-b border-gray-100", children: [_jsx("h3", { className: "font-bold text-sm uppercase tracking-widest mb-4", children: "Availability" }), _jsxs("label", { className: "flex items-center gap-3", children: [_jsx("input", { type: "checkbox", checked: showInStockOnly, onChange: () => setShowInStockOnly(!showInStockOnly), className: "rounded border-gray-300 text-black focus:ring-black" }), _jsx("span", { className: "text-sm text-gray-700", children: "In Stock Only" })] })] }), _jsxs("div", { children: [_jsx("h3", { className: "font-bold text-sm uppercase tracking-widest mb-4", children: "Price Range" }), _jsx("input", { type: "range", min: "0", max: "5000", step: "50", value: priceRange[1], onChange: (e) => setPriceRange([priceRange[0], parseInt(e.target.value)]), className: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black mb-4" }), _jsxs("div", { className: "flex justify-between font-bold text-sm", children: [_jsx("span", { children: formatCurrency(0, storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }), _jsxs("span", { children: [formatCurrency(priceRange[1], storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }), "+"] })] })] }), _jsxs("div", { children: [_jsx("h3", { className: "font-bold text-sm uppercase tracking-widest mb-4", children: "Categories" }), _jsx(CategoryTree, { categories: categories, selectedCategoryIds: selectedCategories, onCategoryToggle: (categoryId, isSelected) => {
-                                            setSelectedCategories(prev => isSelected
-                                                ? [...prev, categoryId]
-                                                : prev.filter(id => id !== categoryId));
-                                        }, mode: "checkbox" })] }), _jsxs("div", { children: [_jsx("h3", { className: "font-bold text-sm uppercase tracking-widest mb-4", children: "Brand" }), brands.length > 0 ? (_jsx("div", { className: "space-y-3", children: brands.map(brand => (_jsxs("label", { className: "flex items-center gap-3", children: [_jsx("input", { type: "checkbox", checked: selectedBrands.includes(brand), onChange: () => setSelectedBrands(prev => prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]), className: "rounded border-gray-300 text-black focus:ring-black" }), _jsx("span", { className: "text-sm text-gray-700", children: brand })] }, brand))) })) : (_jsx("p", { className: "text-xs text-gray-500 italic", children: "No brands available" }))] }), _jsxs("div", { children: [_jsx("h3", { className: "font-bold text-sm uppercase tracking-widest mb-4", children: "Rating" }), _jsx("div", { className: "space-y-3", children: [4, 3, 2, 1].map(rating => (_jsxs("label", { className: "flex items-center gap-3", children: [_jsx("input", { type: "radio", name: "mobile-rating", checked: minRating === rating, onChange: () => setMinRating(minRating === rating ? null : rating), className: "rounded-full border-gray-300 text-black focus:ring-black" }), _jsxs("div", { className: "flex items-center gap-1", children: [_jsx("div", { className: "flex text-yellow-400", children: Array.from({ length: 5 }).map((_, i) => (_jsx(Star, { className: `h-3 w-3 ${i < rating ? 'fill-current' : 'text-gray-200 fill-gray-200'}` }, i))) }), _jsx("span", { className: "text-sm text-gray-600", children: "& Up" })] })] }, rating))) })] })] }), _jsxs("div", { className: "absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex gap-3", children: [_jsx(Button, { onClick: clearAllFilters, variant: "outline", className: "flex-1 h-12 font-bold rounded-lg border-gray-300", children: "Reset" }), _jsx(Button, { onClick: () => setIsFilterOpen(false), className: "flex-[2] bg-black text-white hover:bg-blue-600 h-12 font-bold rounded-lg transition-colors", children: "View Results" })] })] })] }));
+                                    : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600'}`, children: category.name }, category.id)))] }), _jsxs("div", { id: "product-grid", className: "grid grid-cols-1 lg:grid-cols-4 gap-8", children: [_jsxs("aside", { className: "hidden lg:block col-span-1 space-y-8 sticky top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent", children: [_jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-white/5", children: [_jsx("h2", { className: "text-xl font-bold text-white uppercase tracking-tight", children: "Filters" }), hasActiveFilters && (_jsxs("button", { onClick: clearAllFilters, className: "text-xs font-medium text-orange-500 hover:text-orange-400 flex items-center gap-1 uppercase tracking-widest", children: [_jsx(RotateCcw, { className: "h-3 w-3" }), " Reset"] }))] }), _jsxs("div", { children: [_jsx("h3", { className: "text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-4", children: "Search" }), _jsxs("div", { className: "relative", children: [_jsx(Search, { className: "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" }), _jsx("input", { type: "text", placeholder: "Search menu...", value: searchQuery, onChange: (e) => setSearchQuery(e.target.value), className: "w-full pl-10 pr-4 py-3 bg-[#1A1A1A] border border-white/10 rounded-none text-sm text-white focus:outline-none focus:border-orange-500 transition-all" })] })] }), _jsxs("div", { children: [_jsx("h3", { className: "text-xs font-bold text-gray-500 uppercase tracking-[0.2em] mb-4", children: "Categories" }), _jsx("div", { className: "space-y-2", children: categories.map((category) => (_jsxs("label", { className: "flex items-center gap-3 cursor-pointer group p-2 -ml-2 rounded-none hover:bg-white/5 transition-colors", children: [_jsx("div", { className: `w-5 h-5 rounded-none border flex items-center justify-center transition-colors ${selectedCategories.includes(category.id) ? 'bg-orange-600 border-orange-600' : 'border-white/20 group-hover:border-white/40'}`, children: selectedCategories.includes(category.id) && _jsx(Check, { className: "h-3 w-3 text-white" }) }), _jsx("input", { type: "checkbox", className: "hidden", checked: selectedCategories.includes(category.id), onChange: () => setSelectedCategories(prev => prev.includes(category.id) ? prev.filter(id => id !== category.id) : [...prev, category.id]) }), _jsx("span", { className: "text-sm text-gray-400 font-medium group-hover:text-white transition-colors uppercase tracking-wide", children: category.name })] }, category.id))) })] }), _jsxs("div", { children: [_jsxs("div", { className: "flex items-center justify-between mb-4", children: [_jsx("h3", { className: "text-xs font-bold text-gray-500 uppercase tracking-[0.2em]", children: "Max Price" }), priceRange[1] < 100 && (_jsx("button", { onClick: () => setPriceRange([0, 100]), className: "text-xs text-orange-500 hover:text-orange-400 font-medium transition-colors uppercase tracking-widest", children: "Reset" }))] }), _jsxs("div", { className: "space-y-4", children: [_jsx("input", { type: "range", min: "0", max: "100", step: "5", value: priceRange[1], onChange: (e) => setPriceRange([priceRange[0], parseInt(e.target.value)]), className: "w-full h-1 bg-white/10 rounded-none appearance-none cursor-pointer accent-orange-600" }), _jsxs("div", { className: "flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase tracking-widest", children: [_jsx("span", { children: "$0" }), _jsx("span", { className: "text-white", children: formatCurrency(priceRange[1], storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) })] })] })] })] }), _jsxs("div", { className: "lg:col-span-3", children: [_jsxs("div", { className: "lg:hidden mb-6 flex items-center justify-between", children: [_jsxs(Button, { onClick: () => setIsFilterOpen(true), variant: "outline", className: "flex items-center gap-2 border-white/10 text-white rounded-none uppercase tracking-widest text-xs", children: [_jsx(SlidersHorizontal, { className: "h-4 w-4" }), " Filters"] }), _jsxs("select", { value: sortBy, onChange: (e) => setSortBy(e.target.value), className: "bg-transparent text-xs font-bold text-gray-400 uppercase tracking-widest focus:outline-none", children: [_jsx("option", { value: "featured", children: "Featured" }), _jsx("option", { value: "price-asc", children: "Price: Low-High" }), _jsx("option", { value: "price-desc", children: "Price: High-Low" })] })] }), _jsxs("div", { className: "hidden lg:flex items-center justify-between mb-8", children: [_jsxs("p", { className: "text-xs font-bold text-gray-500 uppercase tracking-[0.2em]", children: ["Showing ", _jsx("span", { className: "text-white", children: filteredAndSortedItems.length }), " delicacies"] }), _jsxs("div", { className: "flex items-center gap-4", children: [_jsx("span", { className: "text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]", children: "Sort by" }), _jsxs("select", { value: sortBy, onChange: (e) => setSortBy(e.target.value), className: "bg-transparent text-xs font-bold text-white uppercase tracking-widest focus:outline-none cursor-pointer hover:text-orange-500 transition-colors", children: [_jsx("option", { value: "featured", children: "Featured" }), _jsx("option", { value: "price-asc", children: "Price: Low to High" }), _jsx("option", { value: "price-desc", children: "Price: High to Low" })] })] })] }), isFiltering ? (_jsx(ProductGridSkeleton, { count: 12, columns: 3 })) : displayedItems.length > 0 ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8", children: displayedItems.map((item) => (_jsxs("div", { className: "group bg-[#1A1A1A] rounded-none overflow-hidden border border-white/5 hover:border-orange-500/30 transition-all duration-500 flex flex-col h-full", children: [_jsxs("div", { className: "relative aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700", children: [_jsx(ImageWithFallback, { src: item.image, alt: item.name, className: "w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110", skeletonAspectRatio: "square" }), _jsx("div", { className: "absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center", children: _jsx(Button, { className: "rounded-none bg-white text-black hover:bg-orange-600 hover:text-white transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 shadow-2xl font-bold px-8 uppercase tracking-widest text-[10px]", onClick: () => handleAddToCart(item), children: "Add to Order" }) })] }), _jsxs("div", { className: "p-8 flex flex-col flex-1 text-center", children: [_jsx("h3", { className: "font-bold text-lg text-white uppercase tracking-tight mb-2 group-hover:text-orange-500 transition-colors transition-all", children: item.name }), _jsx("p", { className: "text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed flex-1 font-light italic", children: item.description }), _jsx("span", { className: "text-2xl font-serif text-white", children: formatCurrency(item.price, storeConfig.settings?.currency || 'USD') })] })] }, item.id))) }), hasMore && (_jsx("div", { className: "mt-16 text-center", children: _jsx(Button, { onClick: () => setVisibleProducts(prev => prev + 12), variant: "outline", className: "min-w-[240px] rounded-none font-bold h-14 border-white/10 text-white hover:bg-white hover:text-black uppercase tracking-[0.2em] text-xs transition-all", children: "Load More" }) }))] })) : (_jsxs("div", { className: "flex flex-col items-center justify-center py-32 bg-[#1A1A1A] rounded-none border border-white/5 text-center", children: [_jsx("div", { className: "w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-8 text-gray-600", children: _jsx(Search, { className: "h-10 w-10" }) }), _jsx("h3", { className: "text-2xl font-bold text-white uppercase tracking-tight mb-4", children: "Nothing Found" }), _jsx("p", { className: "text-gray-500 mb-10 max-w-sm mx-auto font-light italic", children: "Our culinary team couldn't find any items matching your criteria." }), _jsx(Button, { onClick: clearAllFilters, className: "rounded-none px-12 h-14 bg-white text-black hover:bg-orange-600 hover:text-white uppercase tracking-widest font-bold text-xs", children: "Reset Filters" })] }))] })] })] }), _jsxs(Sheet, { isOpen: isFilterOpen, onClose: () => setIsFilterOpen(false), title: "Filters", side: "right", className: "bg-[#0F0F0F] text-white border-white/10", children: [_jsxs("div", { className: "flex flex-col h-full overflow-y-auto pb-24 space-y-10 p-1", children: [_jsxs("div", { children: [_jsx("h3", { className: "text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-6", children: "Search" }), _jsxs("div", { className: "relative", children: [_jsx(Search, { className: "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" }), _jsx("input", { type: "text", placeholder: "Search menu...", value: searchQuery, onChange: (e) => setSearchQuery(e.target.value), className: "w-full pl-10 pr-4 py-4 bg-[#1A1A1A] border border-white/10 rounded-none text-sm text-white outline-none focus:border-orange-500" })] })] }), _jsxs("div", { children: [_jsx("h3", { className: "text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-6", children: "Categories" }), _jsx("div", { className: "space-y-4", children: categories.map((category) => (_jsxs("label", { className: "flex items-center gap-4", children: [_jsx("input", { type: "checkbox", checked: selectedCategories.includes(category.id), onChange: () => setSelectedCategories(prev => prev.includes(category.id) ? prev.filter(id => id !== category.id) : [...prev, category.id]), className: "w-5 h-5 rounded-none border-white/20 bg-transparent text-orange-600 focus:ring-orange-500" }), _jsx("span", { className: "text-sm text-gray-400 font-medium uppercase tracking-wider", children: category.name })] }, category.id))) })] }), _jsxs("div", { children: [_jsx("h3", { className: "text-[10px] font-bold text-gray-500 uppercase tracking-[0.3em] mb-6", children: "Max Price" }), _jsx("input", { type: "range", min: "0", max: "100", step: "5", value: priceRange[1], onChange: (e) => setPriceRange([priceRange[0], parseInt(e.target.value)]), className: "w-full h-1 bg-white/10 rounded-none appearance-none cursor-pointer accent-orange-600 mb-6" }), _jsxs("div", { className: "flex justify-between font-bold text-[10px] text-gray-500 uppercase tracking-widest", children: [_jsx("span", { children: "$0" }), _jsx("span", { className: "text-white", children: formatCurrency(priceRange[1], storeConfig.settings?.currency || 'USD', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) })] })] })] }), _jsxs("div", { className: "absolute bottom-0 left-0 right-0 p-6 bg-[#0F0F0F] border-t border-white/10 flex gap-4", children: [_jsx(Button, { onClick: clearAllFilters, variant: "outline", className: "flex-1 h-14 font-bold rounded-none border-white/10 text-white uppercase tracking-widest text-[10px]", children: "Reset" }), _jsx(Button, { onClick: () => setIsFilterOpen(false), className: "flex-[2] bg-white text-black hover:bg-orange-600 hover:text-white h-14 font-bold rounded-none transition-colors uppercase tracking-widest text-[10px]", children: "Apply" })] })] })] }));
 }
 export function ProductsPage(props) {
     return (_jsx(Suspense, { fallback: _jsx("div", { className: "min-h-screen flex items-center justify-center", children: _jsx("div", { className: "w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" }) }), children: _jsx(ProductsPageContent, { ...props }) }));

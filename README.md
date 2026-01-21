@@ -1,4 +1,4 @@
-# @payaza/storefront-layouts
+# payaza-storefront-layouts
 
 A comprehensive package of shared layout components, utilities, and services for StoreFront applications. This package contains all layout components, UI components, hooks, contexts, and utility functions used across Payaza StoreFront applications.
 
@@ -17,7 +17,7 @@ This package provides a complete set of reusable layout components that are data
 ## Installation
 
 ```bash
-npm install @payaza/storefront-layouts
+npm install payaza-storefront-layouts
 ```
 
 Or using npm workspaces:
@@ -25,7 +25,7 @@ Or using npm workspaces:
 ```json
 {
   "dependencies": {
-    "@payaza/storefront-layouts": "workspace:*"
+    "payaza-storefront-layouts": "workspace:*"
   }
 }
 ```
@@ -36,19 +36,99 @@ This package requires the following peer dependencies (must be installed in your
 
 ```json
 {
+  "@tailwindcss/postcss": "^4.0.0",
   "framer-motion": "^12.0.0",
   "next": "^16.0.3",
+  "postcss": "^8.0.0",
   "react": "^19.2.0",
-  "react-dom": "^19.2.0"
+  "react-dom": "^19.2.0",
+  "tailwindcss": "^4.0.0"
 }
 ```
+
+## CSS Setup
+
+This package includes a complete CSS file with Tailwind CSS v4, custom utilities, and styles. To use the layouts, you need to:
+
+### 1. Install Peer Dependencies
+
+```bash
+npm install tailwindcss@^4.0.0 @tailwindcss/postcss@^4.0.0 postcss@^8.0.0
+```
+
+### 2. Configure PostCSS
+
+Create or update `postcss.config.mjs` in your project root:
+
+```javascript
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+```
+
+### 3. CSS is Automatically Imported
+
+**No separate CSS import needed!** The styles are automatically imported when you import any component from the package:
+
+```typescript
+import { FoodHomePage } from 'payaza-storefront-layouts';
+// Styles are automatically loaded - no additional import needed
+```
+
+If you need to import styles separately (e.g., in a CSS file), you can still use:
+
+```css
+@import "payaza-storefront-layouts/styles";
+```
+
+### 4. Configure Tailwind Content Paths
+
+If you're using a traditional Tailwind config, ensure it scans the package files:
+
+```typescript
+// tailwind.config.ts
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './node_modules/payaza-storefront-layouts/dist/**/*.{js,jsx}',
+  ],
+  // ... rest of config
+};
+
+export default config;
+```
+
+**Note**: With Tailwind CSS v4, you typically don't need a `tailwind.config.ts` file. The `@import "tailwindcss"` directive in the CSS file handles everything automatically.
+
+### Alternative: Use Your Own Tailwind Setup
+
+If you prefer to use your own Tailwind configuration, you can:
+
+1. Skip importing the package CSS file
+2. Configure Tailwind to scan the package files as shown above
+3. Ensure you have the required custom utilities and CSS variables in your own CSS
+
+The package CSS includes:
+- Tailwind CSS v4 base styles
+- `tw-animate-css` animations
+- Custom utility classes (glassmorphism, animations, scroll utilities)
+- Custom NProgress styles
+- CSS variables for theming
 
 ## Usage
 
 ### Basic Layout Usage
 
 ```typescript
-import { FoodHomePage, FoodProductsPage, FoodProductDetailPage } from '@payaza/storefront-layouts';
+import { FoodHomePage, FoodProductsPage, FoodProductDetailPage } from 'payaza-storefront-layouts';
 
 export default function StorePage({ storeConfig }) {
   return <FoodHomePage storeConfig={storeConfig} />;
@@ -66,7 +146,7 @@ import {
   FoodMenuPage,
   FoodAboutPage,
   FoodContactPage
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 
 // Use layout-specific pages
 <FoodProductsPage storeConfig={storeConfig} />
@@ -84,7 +164,7 @@ import {
   AccountPage,
   CartPage,
   CheckoutPage
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 
 <BaseStoreLayout storeConfig={storeConfig}>
   {/* Your content */}
@@ -98,7 +178,7 @@ import {
   CertificateCard,
   CertificateViewer,
   MentorshipProgress
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 
 <CertificateCard 
   certificate={certificateData} 
@@ -117,7 +197,7 @@ import {
   getThemeColor,
   isDemoStore,
   shouldUseAPI
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 
 const price = formatCurrency(1000, 'NGN'); // "₦1,000.00"
 const activeServices = filterActiveServices(services);
@@ -127,7 +207,7 @@ const bannerUrl = getBannerImage(storeConfig);
 ### Using JSON Layout Data
 
 ```typescript
-import { getLayoutJSON, layoutJSONMap } from '@payaza/storefront-layouts/json';
+import { getLayoutJSON, layoutJSONMap } from 'payaza-storefront-layouts/json';
 
 const layoutData = getLayoutJSON('food');
 // or
@@ -279,7 +359,7 @@ import {
   getLayoutText,
   getThemeColor,
   getLogoUrl
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 ```
 
 ### Currency & Formatting
@@ -289,7 +369,7 @@ import {
   normalizePrice,
   getCurrencySymbol,
   getCurrencySymbolInfo
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 ```
 
 ### Demo Detection
@@ -298,7 +378,7 @@ import {
   isDemoStore,
   shouldUseAPI,
   getBaseStoreSlug
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 ```
 
 ### Filtering
@@ -306,7 +386,7 @@ import {
 import {
   filterActiveProducts,
   filterActiveServices
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 ```
 
 ### Store Configuration
@@ -315,7 +395,7 @@ import {
   getStoreConfigAsync,
   transformProductToStoreProduct,
   extractImageUrls
-} from '@payaza/storefront-layouts';
+} from 'payaza-storefront-layouts';
 ```
 
 ## Services
@@ -338,7 +418,7 @@ The package includes service stubs for:
 
 ### Auth Context
 ```typescript
-import { AuthProvider, useAuth } from '@payaza/storefront-layouts';
+import { AuthProvider, useAuth } from 'payaza-storefront-layouts';
 
 <AuthProvider>
   <YourApp />
@@ -350,14 +430,14 @@ const { user, isAuthenticated, login, logout } = useAuth();
 
 ### Store Context
 ```typescript
-import { StoreProvider, useStore } from '@payaza/storefront-layouts';
+import { StoreProvider, useStore } from 'payaza-storefront-layouts';
 
 const { storeConfig, updateStoreConfig } = useStore();
 ```
 
 ### Loading Context
 ```typescript
-import { LoadingProvider, useLoading } from '@payaza/storefront-layouts';
+import { LoadingProvider, useLoading } from 'payaza-storefront-layouts';
 
 const { startBackendLoading, stopBackendLoading } = useLoading();
 ```
@@ -366,7 +446,7 @@ const { startBackendLoading, stopBackendLoading } = useLoading();
 
 ### Analytics Hook
 ```typescript
-import { useAnalytics } from '@payaza/storefront-layouts';
+import { useAnalytics } from 'payaza-storefront-layouts';
 
 const { trackEvent, trackPageView } = useAnalytics();
 ```
@@ -393,7 +473,7 @@ Add to `next.config.ts`:
 
 ```typescript
 const nextConfig = {
-  transpilePackages: ['@payaza/storefront-layouts'],
+  transpilePackages: ['payaza-storefront-layouts'],
 };
 ```
 
@@ -412,7 +492,7 @@ This will:
 ## Package Structure
 
 ```
-@payaza/storefront-layouts/
+payaza-storefront-layouts/
 ├── dist/                    # Compiled output
 │   ├── layouts/             # Layout components
 │   ├── components/          # UI components

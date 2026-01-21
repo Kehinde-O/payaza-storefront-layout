@@ -1,0 +1,762 @@
+{
+  "layoutId": "fashion-hub",
+  "layoutName": "Fashion Hub",
+  "pages": [
+    {
+      "id": "home",
+      "label": "Home",
+      "path": "/",
+      "data": {
+        "hero": {
+          "show": true,
+          "autoPlay": true,
+          "showBadges": true,
+          "showCTA": true,
+          "showSecondaryCTA": true,
+          "sliders": [
+            {
+              "id": "hero_slide_1",
+              "image": "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop",
+              "badge": "New Season",
+              "title": "New Collection",
+              "description": "Discover the latest fashion trends",
+              "primaryButton": {
+                "text": "Shop Now",
+                "link": "/products"
+              },
+              "secondaryButton": {
+                "text": "Explore",
+                "link": "/categories"
+              }
+            },
+            {
+              "id": "hero_slide_2",
+              "image": "https://images.unsplash.com/photo-1617059063772-34532796ddb5?q=80&w=2000&auto=format&fit=crop",
+              "badge": "Trending Now",
+              "title": "Discover Your Style",
+              "description": "Explore our curated collection of timeless pieces and contemporary designs.",
+              "primaryButton": {
+                "text": "View Collection",
+                "link": "/products"
+              },
+              "secondaryButton": {
+                "text": "",
+                "link": "/categories/men"
+              }
+            },
+            {
+              "id": "hero_slide_3",
+              "image": "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop",
+              "badge": "Limited Edition",
+              "title": "Premium Quality",
+              "description": "Crafted with attention to detail and premium materials for lasting elegance.",
+              "primaryButton": {
+                "text": "Shop Now",
+                "link": "/products"
+              },
+              "secondaryButton": {
+                "text": "",
+                "link": "/categories/men"
+              }
+            }
+          ]
+        },
+        "benefitsStrip": {
+          "show": true,
+          "items": [
+            {
+              "icon": "Truck",
+              "text": "Free Shipping",
+              "subtext": "On all orders over $50"
+            },
+            {
+              "icon": "RefreshCw",
+              "text": "Free Returns",
+              "subtext": "30-day money back guarantee"
+            },
+            {
+              "icon": "ShieldCheck",
+              "text": "Secure Payment",
+              "subtext": "100% secure checkout process"
+            }
+          ]
+        },
+        "categories": {
+          "show": true,
+          "showViewAll": true,
+          "maxCategories": 2,
+          "title": "Shop by Category",
+          "subtitle": "Curated collections for every style",
+          "viewAll": "View All Categories"
+        },
+        "editorial": {
+          "show": true,
+          "label": "Editorial",
+          "title": "Redefining Modern\nElegance",
+          "description": "Explore our latest editorial featuring timeless pieces crafted for the contemporary wardrobe. From essential basics to statement outwear, find your signature look.",
+          "image": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2000&auto=format&fit=crop",
+          "detailImage": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1000&auto=format&fit=crop",
+          "primaryButtonText": "View Lookbook",
+          "primaryButtonLink": "/style-guide",
+          "secondaryButtonText": "Our Story",
+          "secondaryButtonLink": "/about"
+        },
+        "featuredProducts": {
+          "show": true,
+          "showViewAll": true,
+          "limit": 4,
+          "title": "Trending Now",
+          "subtitle": "Discover the latest trends and essential pieces that define this season's style.",
+          "viewAll": "View All Products"
+        },
+        "promoBanner": {
+          "show": false,
+          "image": "",
+          "title": "",
+          "subtitle": "",
+          "buttonText": "",
+          "buttonLink": "/products"
+        }
+      },
+      "_schema": {
+        "hero": {
+          "_editor": "section",
+          "_label": "Hero Section",
+          "_description": "Full-width carousel showcasing featured collections or campaigns",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "autoPlay": {
+            "_editor": "toggle",
+            "_label": "Auto Play Slides"
+          },
+          "showBadges": {
+            "_editor": "toggle",
+            "_label": "Show Badges"
+          },
+          "showCTA": {
+            "_editor": "toggle",
+            "_label": "Show Primary Button"
+          },
+          "showSecondaryCTA": {
+            "_editor": "toggle",
+            "_label": "Show Secondary Button"
+          },
+          "sliders": {
+            "_editor": "array",
+            "_label": "Hero Slides",
+            "_itemEditor": "slider",
+            "_itemSchema": {
+              "image": {
+                "_editor": "image",
+                "_label": "Slide Image"
+              },
+              "badge": {
+                "_editor": "text",
+                "_label": "Badge Text"
+              },
+              "title": {
+                "_editor": "text",
+                "_label": "Title"
+              },
+              "description": {
+                "_editor": "multiline_text",
+                "_label": "Description"
+              },
+              "primaryButton": {
+                "_editor": "button",
+                "_label": "Primary Button",
+                "text": {
+                  "_editor": "text",
+                  "_label": "Button Text"
+                },
+                "link": {
+                  "_editor": "text",
+                  "_label": "Button Link"
+                }
+              },
+              "secondaryButton": {
+                "_editor": "button",
+                "_label": "Secondary Button",
+                "text": {
+                  "_editor": "text",
+                  "_label": "Button Text"
+                },
+                "link": {
+                  "_editor": "text",
+                  "_label": "Button Link"
+                }
+              }
+            }
+          }
+        },
+        "benefitsStrip": {
+          "_editor": "section",
+          "_label": "Benefits Strip",
+          "_description": "Horizontal strip displaying key store benefits",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "items": {
+            "_editor": "array",
+            "_label": "Benefits Items",
+            "_itemEditor": "benefit",
+            "_itemSchema": {
+              "icon": {
+                "_editor": "icon",
+                "_label": "Icon Name"
+              },
+              "text": {
+                "_editor": "text",
+                "_label": "Benefit Text"
+              },
+              "subtext": {
+                "_editor": "text",
+                "_label": "Subtext"
+              }
+            }
+          }
+        },
+        "categories": {
+          "_editor": "section",
+          "_label": "Shop by Category",
+          "_description": "Adaptive grid displaying key product categories",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showViewAll": {
+            "_editor": "toggle",
+            "_label": "Show View All Link"
+          },
+          "maxCategories": {
+            "_editor": "number",
+            "_label": "Maximum Categories to Display"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Section Title"
+          },
+          "subtitle": {
+            "_editor": "text",
+            "_label": "Subtitle"
+          },
+          "viewAll": {
+            "_editor": "text",
+            "_label": "View All Link Text"
+          }
+        },
+        "editorial": {
+          "_editor": "section",
+          "_label": "Editorial / Lookbook",
+          "_description": "Stylish section for editorial content or style guides",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "label": {
+            "_editor": "text",
+            "_label": "Eyebrow Label"
+          },
+          "title": {
+            "_editor": "multiline_text",
+            "_label": "Title"
+          },
+          "description": {
+            "_editor": "multiline_text",
+            "_label": "Description"
+          },
+          "image": {
+            "_editor": "image",
+            "_label": "Main Editorial Image"
+          },
+          "detailImage": {
+            "_editor": "image",
+            "_label": "Detail/Inset Image"
+          },
+          "primaryButtonText": {
+            "_editor": "text",
+            "_label": "Primary Button Text"
+          },
+          "primaryButtonLink": {
+            "_editor": "text",
+            "_label": "Primary Button Link"
+          },
+          "secondaryButtonText": {
+            "_editor": "text",
+            "_label": "Secondary Button Text"
+          },
+          "secondaryButtonLink": {
+            "_editor": "text",
+            "_label": "Secondary Button Link"
+          }
+        },
+        "featuredProducts": {
+          "_editor": "section",
+          "_label": "Trending Products",
+          "_description": "Grid display of trending or featured products",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showViewAll": {
+            "_editor": "toggle",
+            "_label": "Show View All Button"
+          },
+          "limit": {
+            "_editor": "number",
+            "_label": "Product Limit"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Section Title"
+          },
+          "subtitle": {
+            "_editor": "text",
+            "_label": "Subtitle"
+          },
+          "viewAll": {
+            "_editor": "text",
+            "_label": "View All Button Text"
+          }
+        },
+        "promoBanner": {
+          "_editor": "section",
+          "_label": "Promotional Banner",
+          "_description": "Promotional banner section for special offers, sales, or announcements",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "image": {
+            "_editor": "image",
+            "_label": "Banner Background Image"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Banner Title"
+          },
+          "subtitle": {
+            "_editor": "text",
+            "_label": "Banner Subtitle"
+          },
+          "buttonText": {
+            "_editor": "text",
+            "_label": "Button Text"
+          },
+          "buttonLink": {
+            "_editor": "text",
+            "_label": "Button Link"
+          }
+        }
+      }
+    },
+    {
+      "id": "products",
+      "label": "Products",
+      "path": "/products",
+      "data": {
+        "productsHeader": {
+          "show": true,
+          "showFilters": true,
+          "showSort": true,
+          "categoryHeaderImage": "",
+          "title": "Explore The Collections",
+          "description": "Don't miss out on shopping our latest collection! curated for quality and style. Experience the perfect blend of modern aesthetics and premium craftsmanship.",
+          "badge": "New Arrivals 2024",
+          "primaryButton": "Start Shopping",
+          "secondaryButton": "View Categories"
+        },
+        "productsGrid": {
+          "show": true,
+          "showPagination": true,
+          "showWishlist": true,
+          "productsPerPage": 12
+        }
+      },
+      "_schema": {
+        "productsHeader": {
+          "_editor": "section",
+          "_label": "Products Header",
+          "_description": "Header section at the top of the products listing page",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showFilters": {
+            "_editor": "toggle",
+            "_label": "Show Filters"
+          },
+          "showSort": {
+            "_editor": "toggle",
+            "_label": "Show Sort Options"
+          },
+          "categoryHeaderImage": {
+            "_editor": "image",
+            "_label": "Header Background Image"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Page Title"
+          },
+          "description": {
+            "_editor": "multiline_text",
+            "_label": "Description"
+          },
+          "badge": {
+            "_editor": "text",
+            "_label": "Badge Text"
+          },
+          "primaryButton": {
+            "_editor": "text",
+            "_label": "Primary Button Text"
+          },
+          "secondaryButton": {
+            "_editor": "text",
+            "_label": "Secondary Button Text"
+          }
+        },
+        "productsGrid": {
+          "_editor": "section",
+          "_label": "Products Grid",
+          "_description": "Grid display of all products with filtering, sorting, and pagination",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showPagination": {
+            "_editor": "toggle",
+            "_label": "Show Pagination"
+          },
+          "showWishlist": {
+            "_editor": "toggle",
+            "_label": "Show Wishlist"
+          },
+          "productsPerPage": {
+            "_editor": "number",
+            "_label": "Products Per Page"
+          }
+        }
+      }
+    },
+    {
+      "id": "categories",
+      "label": "Categories",
+      "path": "/categories",
+      "data": {
+        "categoriesHeader": {
+          "show": true,
+          "title": "Shop by Category",
+          "description": "Explore our comprehensive collection of premium products across various departments. Dive into our curated selections designed to match your style and needs."
+        },
+        "categoryGrid": {
+          "show": true,
+          "showDescriptions": true
+        }
+      },
+      "_schema": {
+        "categoriesHeader": {
+          "_editor": "section",
+          "_label": "Categories Header",
+          "_description": "Header section for the categories listing page",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Page Title"
+          },
+          "description": {
+            "_editor": "multiline_text",
+            "_label": "Description"
+          }
+        },
+        "categoryGrid": {
+          "_editor": "section",
+          "_label": "Category Grid",
+          "_description": "Adaptive masonry-style grid displaying all product categories",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showDescriptions": {
+            "_editor": "toggle",
+            "_label": "Show Category Descriptions"
+          }
+        }
+      }
+    },
+    {
+      "id": "categoryDetail",
+      "label": "Category Detail",
+      "path": "/categories/:id",
+      "data": {
+        "categoryBanner": {
+          "show": true
+        },
+        "categoryProductsGrid": {
+          "show": true,
+          "showFilters": true
+        }
+      },
+      "_schema": {
+        "categoryBanner": {
+          "_editor": "section",
+          "_label": "Category Banner",
+          "_description": "Banner section at the top of category detail page",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          }
+        },
+        "categoryProductsGrid": {
+          "_editor": "section",
+          "_label": "Category Products Grid",
+          "_description": "Grid display of products within the selected category",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showFilters": {
+            "_editor": "toggle",
+            "_label": "Show Filters"
+          }
+        }
+      }
+    },
+    {
+      "id": "about",
+      "label": "About",
+      "path": "/about",
+      "data": {
+        "hero": {
+          "show": true,
+          "heroImage": "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2074&auto=format&fit=crop",
+          "title": "Crafting Experiences, Delivering Joy.",
+          "missionStatement": "Our mission is to provide quality fashion for everyone.",
+          "badge": "Est. 2024"
+        },
+        "story": {
+          "show": true,
+          "sectionLabel": "Who We Are",
+          "title": "Our Journey",
+          "content": "Founded with a bold vision to redefine excellence in the fashion industry, we have grown from a small passion project into a beloved brand. We believe in the power of quality, innovation, and community.\n\nEvery day, we strive to bring you the best products, curated with care and delivered with a smile. Our team is dedicated to ensuring that your experience with us is nothing short of exceptional.",
+          "galleryImages": []
+        },
+        "stats": {
+          "show": true
+        },
+        "contactInfo": {
+          "show": true,
+          "sectionTitle": "Get in Touch",
+          "sectionDescription": "Have questions? We'd love to hear from you. Reach out to our team via email, phone, or visit us at our store.",
+          "address": "123 Store Street\nCommerce City, ST 12345",
+          "email": "hello@store.com",
+          "emailSecondary": "support@store.com",
+          "hours": "Mon - Fri: 9am - 6pm\nSat - Sun: 10am - 4pm"
+        }
+      },
+      "_schema": {
+        "hero": {
+          "_editor": "section",
+          "_label": "Hero Section",
+          "_description": "Hero section at the top of the about page",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "heroImage": {
+            "_editor": "image",
+            "_label": "Hero Background Image"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Page Title"
+          },
+          "missionStatement": {
+            "_editor": "multiline_text",
+            "_label": "Mission Statement"
+          },
+          "badge": {
+            "_editor": "text",
+            "_label": "Badge Text"
+          }
+        },
+        "story": {
+          "_editor": "section",
+          "_label": "Our Story",
+          "_description": "Section telling the story behind the brand",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "sectionLabel": {
+            "_editor": "text",
+            "_label": "Section Label"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Story Title"
+          },
+          "content": {
+            "_editor": "multiline_text",
+            "_label": "Story Content"
+          },
+          "galleryImages": {
+            "_editor": "array",
+            "_label": "Gallery Images",
+            "_itemEditor": "image",
+            "_itemSchema": {
+              "image": {
+                "_editor": "image",
+                "_label": "Gallery Image"
+              },
+              "caption": {
+                "_editor": "text",
+                "_label": "Image Caption"
+              }
+            }
+          }
+        },
+        "stats": {
+          "_editor": "section",
+          "_label": "Statistics",
+          "_description": "Section displaying key statistics and numbers about the business",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          }
+        },
+        "contactInfo": {
+          "_editor": "section",
+          "_label": "Contact Information",
+          "_description": "Section displaying contact information cards",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "sectionTitle": {
+            "_editor": "text",
+            "_label": "Section Title"
+          },
+          "sectionDescription": {
+            "_editor": "text",
+            "_label": "Section Description"
+          },
+          "address": {
+            "_editor": "multiline_text",
+            "_label": "Store Address"
+          },
+          "email": {
+            "_editor": "text",
+            "_label": "Email Address"
+          },
+          "emailSecondary": {
+            "_editor": "text",
+            "_label": "Secondary Email"
+          },
+          "hours": {
+            "_editor": "multiline_text",
+            "_label": "Opening Hours"
+          }
+        }
+      }
+    },
+    {
+      "id": "contact",
+      "label": "Contact",
+      "path": "/contact",
+      "data": {
+        "contactHeader": {
+          "show": true,
+          "title": "Get in Touch",
+          "subtitle": "We'd love to hear from you. Here's how you can reach us."
+        },
+        "contactForm": {
+          "show": true,
+          "showMap": true,
+          "formTitle": "Send us a Message",
+          "infoTitle": "Contact Information",
+          "infoDescription": "Fill out the form and our team will get back to you within 24 hours.",
+          "phone": "+1 (555) 123-4567",
+          "phoneSecondary": "+1 (555) 987-6543",
+          "email": "hello@store.com",
+          "emailSecondary": "support@store.com",
+          "address": "123 Commerce Blvd,\nSuite 100,\nBusiness City, ST 12345",
+          "hours": "Mon - Fri: 9am - 6pm\nSat: 10am - 4pm"
+        }
+      },
+      "_schema": {
+        "contactHeader": {
+          "_editor": "section",
+          "_label": "Contact Header",
+          "_description": "Header section at the top of the contact page",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "title": {
+            "_editor": "text",
+            "_label": "Page Title"
+          },
+          "subtitle": {
+            "_editor": "text",
+            "_label": "Subtitle"
+          }
+        },
+        "contactForm": {
+          "_editor": "section",
+          "_label": "Contact Form",
+          "_description": "Contact form section with form fields and contact information sidebar",
+          "show": {
+            "_editor": "toggle",
+            "_label": "Show Section"
+          },
+          "showMap": {
+            "_editor": "toggle",
+            "_label": "Show Map"
+          },
+          "formTitle": {
+            "_editor": "text",
+            "_label": "Form Title"
+          },
+          "infoTitle": {
+            "_editor": "text",
+            "_label": "Information Section Title"
+          },
+          "infoDescription": {
+            "_editor": "text",
+            "_label": "Information Description"
+          },
+          "phone": {
+            "_editor": "text",
+            "_label": "Phone Number"
+          },
+          "phoneSecondary": {
+            "_editor": "text",
+            "_label": "Secondary Phone"
+          },
+          "email": {
+            "_editor": "text",
+            "_label": "Email Address"
+          },
+          "emailSecondary": {
+            "_editor": "text",
+            "_label": "Secondary Email"
+          },
+          "address": {
+            "_editor": "multiline_text",
+            "_label": "Store Address"
+          },
+          "hours": {
+            "_editor": "multiline_text",
+            "_label": "Opening Hours"
+          }
+        }
+      }
+    }
+  ]
+}

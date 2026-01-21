@@ -24,23 +24,31 @@ export function ProductCard({ product, storeSlug, onAddToCart, onQuickView, clas
     const handleWishlistClick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        // REMOVE IN PRODUCTION: Log wishlist click
-        console.log('[ProductCard] Wishlist button clicked:', {
-            productId: product.id,
-            productName: product.name,
-            isInWishlist: isInWishlist(product.id),
-            isLoading: localWishlistLoading || isWishlistLoading
-        });
+        // Debug logging for wishlist click
+        if (process.env.NODE_ENV === 'development') {
+            console.log('[ProductCard] Wishlist button clicked:', {
+                productId: product.id,
+                productName: product.name,
+                isInWishlist: isInWishlist(product.id),
+                isLoading: localWishlistLoading || isWishlistLoading
+            });
+        }
         if (localWishlistLoading || isWishlistLoading) {
-            console.warn('[ProductCard] Wishlist action already in progress, ignoring click');
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('[ProductCard] Wishlist action already in progress, ignoring click');
+            }
             return;
         }
         setLocalWishlistLoading(true);
         try {
             const wasInWishlist = isInWishlist(product.id);
-            console.log('[ProductCard] Toggling wishlist:', { productId: product.id, wasInWishlist });
+            if (process.env.NODE_ENV === 'development') {
+                console.log('[ProductCard] Toggling wishlist:', { productId: product.id, wasInWishlist });
+            }
             await toggleWishlist(product.id);
-            console.log('[ProductCard] Wishlist toggled successfully');
+            if (process.env.NODE_ENV === 'development') {
+                console.log('[ProductCard] Wishlist toggled successfully');
+            }
             addToast(wasInWishlist
                 ? `${product.name} removed from wishlist`
                 : `${product.name} added to wishlist`, 'success');

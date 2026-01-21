@@ -126,11 +126,11 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
                   <Breadcrumbs items={breadcrumbItems} />
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-gray-900 mb-6">
-                  Shop by Category
+                  Service Categories
                 </h1>
                 <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
-                  Explore our comprehensive collection of premium products across various departments. 
-                  Dive into our curated selections designed to match your style and needs.
+                  Explore our wide range of professional services. 
+                  Find the perfect expert for your needs.
                 </p>
              </div>
           </div>
@@ -190,7 +190,7 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
             <Link
               key={category.id}
               data-category-card
-                     href={`/${storeConfig.slug}/products?category=${category.slug}`}
+                     href={`/${storeConfig.slug}/categories/${category.slug}`}
                      className={`group relative overflow-hidden rounded-2xl bg-gray-100 border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-500 min-h-[300px] ${spanClass}`}
                    >
                      {/* Background Image */}
@@ -214,7 +214,7 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
                               </p>
                   )}
                            <div className="flex items-center gap-2 text-white font-medium text-sm tracking-wide uppercase">
-                              <span className="border-b border-transparent group-hover:border-white transition-colors">Explore Collection</span>
+                              <span className="border-b border-transparent group-hover:border-white transition-colors">Explore Services</span>
                               <ArrowRight className="w-4 h-4 transform transition-transform group-hover:translate-x-1" />
                            </div>
                         </div>

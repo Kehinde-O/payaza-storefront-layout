@@ -136,7 +136,7 @@ export const mockStores = [
             sections: {
                 categories: { show: true, limit: 6 },
                 featuredProducts: { show: true, title: "Chef's Specials", showRatings: true },
-                marketing: { show: true, showPromoBanner: true, showNewsletter: true },
+                marketing: { show: true, showPromoBanner: false, showNewsletter: true },
                 testimonials: { show: true },
                 process: { show: true },
                 brands: { show: false },

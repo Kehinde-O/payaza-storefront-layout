@@ -3,7 +3,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { createContext, useContext, useState, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import { cn } from '../../lib/utils';
-const ToastContext = createContext(undefined);
+export const ToastContext = createContext(undefined);
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
     const removeToast = useCallback((id) => {

@@ -20,25 +20,33 @@ export const loadPayazaSDK = () => {
         const existingScript = document.querySelector('script[src*="payaza"]');
         if (existingScript) {
             console.log('Payaza script already in DOM, waiting for load...');
-            // Wait for it to load
-            const checkInterval = setInterval(() => {
-                if (window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function') {
+            const cleanup = () => {
+                if (checkInterval)
                     clearInterval(checkInterval);
-                    resolve();
-                }
-            }, 100);
-            existingScript.addEventListener('load', () => {
-                clearInterval(checkInterval);
+                existingScript.removeEventListener('load', onLoad);
+                existingScript.removeEventListener('error', onError);
+            };
+            const onLoad = () => {
+                cleanup();
                 // Give SDK time to initialize
                 setTimeout(() => {
                     console.log('Existing script loaded, SDK available:', !!(window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function'));
                     resolve();
                 }, 300);
-            });
-            existingScript.addEventListener('error', () => {
-                clearInterval(checkInterval);
+            };
+            const onError = () => {
+                cleanup();
                 reject(new Error('Failed to load Payaza SDK from existing script'));
-            });
+            };
+            // Wait for it to load
+            const checkInterval = setInterval(() => {
+                if (window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function') {
+                    cleanup();
+                    resolve();
+                }
+            }, 100);
+            existingScript.addEventListener('load', onLoad);
+            existingScript.addEventListener('error', onError);
             return;
         }
         // Payaza SDK script URL (from official documentation)
@@ -47,6 +55,9 @@ export const loadPayazaSDK = () => {
         const script = document.createElement('script');
         script.src = sdkUrl;
         script.defer = true;
+        // We don't need to manually remove these listeners as the element is ours and we are inside a promise
+        // that settles once. However, for strict correctness/memory safety if the promise logic was complex/long-lived:
+        // script.onload = null; script.onerror = null;
         script.onload = () => {
             console.log('Payaza SDK script loaded, waiting for initialization...');
             // Wait for SDK to initialize
@@ -173,11 +184,18 @@ export const initiatePayazaCheckout = async (config) => {
         // Load SDK if not already loaded with timeout
         const SDK_LOAD_TIMEOUT = 10000; // 10 seconds
         const loadPromise = loadPayazaSDK();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Payaza SDK loading timeout. Please check your internet connection and try again.')), SDK_LOAD_TIMEOUT));
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Payaza SDK loading timeout. Please check your internet connection and try again.')), SDK_LOAD_TIMEOUT);
+        });
         try {
             await Promise.race([loadPromise, timeoutPromise]);
+            if (timeoutId)
+                clearTimeout(timeoutId);
         }
         catch (loadError) {
+            if (timeoutId)
+                clearTimeout(timeoutId);
             if (loadError?.message?.includes('timeout')) {
                 throw new Error('Payment system is loading. Please wait a moment and try again.');
             }

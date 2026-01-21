@@ -1,16 +1,18 @@
 'use client';
 
-import { StoreConfig } from '@/lib/store-types';
-import { Button } from '@/components/ui/button';
-import { ProductRating } from '@/components/ui/product-rating';
+import { StoreConfig } from '../../../lib/store-types';
+import { Button } from '../../../components/ui/button';
+import { ProductRating } from '../../../components/ui/product-rating';
 import { ShoppingCart, Heart, ArrowRight, Truck, ShieldCheck, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { ImageWithFallback } from '../../../components/ui/image-with-fallback';
 import { useState, useEffect } from 'react';
-import { formatCurrency, filterActiveProducts } from '@/lib/utils';
+import { formatCurrency, filterActiveProducts } from '../../../lib/utils';
 import { getLayoutText, getBannerImage } from '../../../lib/utils/asset-helpers';
 import { shouldUseAPI } from '../../../lib/utils/demo-detection';
+import { useStore } from '../../../lib/store-context';
+import { DynamicIcon } from '../../../components/ui/dynamic-icon';
 import { PromoBanner } from '../../shared/components/PromoBanner';
 
 interface ClothingHomePageProps {
@@ -28,9 +30,16 @@ interface HeroSlide {
   secondaryButtonLink?: string;
 }
 
-export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
+export function ClothingHomePage({ storeConfig: initialConfig }: ClothingHomePageProps) {
+  // Use the store from context which is updated in real-time by the editor
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+
   const layoutConfig = storeConfig.layoutConfig;
   const categories = storeConfig.categories || [];
+
+  // In preview mode, use mock products if none are available
+  const isPreview = (typeof window !== 'undefined' && (window as any).__IS_PREVIEW__) || storeConfig.layoutConfig?.isPreview;
 
   // Randomly select max 2 categories on every page load
   const [displayedCategories, setDisplayedCategories] = useState<typeof categories>([]);
@@ -40,49 +49,57 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
     if (categories.length > 0) {
       const shuffled = [...categories].sort(() => Math.random() - 0.5);
       setDisplayedCategories(shuffled.slice(0, 2));
+    } else if (isPreview) {
+      // Use mock categories in preview mode if none available
+      setDisplayedCategories([
+        { id: 'cat1', name: 'Menswear', slug: 'men', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200' },
+        { id: 'cat2', name: 'Womenswear', slug: 'women', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=1200' }
+      ]);
     } else {
       setDisplayedCategories([]);
     }
-  }, []); // Empty deps = run on mount only
+  }, [categories, isPreview]); // Added categories and isPreview to deps
 
-  // Debug logging for configuration
-  console.log('[ClothingHomePage] Full storeConfig:', {
-    storeId: storeConfig.id,
-    storeSlug: storeConfig.slug,
-    hasLayoutConfig: !!layoutConfig,
-    layoutConfigType: typeof layoutConfig,
-  });
-  console.log('[ClothingHomePage] LayoutConfig structure:', {
-    hasSections: !!layoutConfig?.sections,
-    hasHero: !!layoutConfig?.sections?.hero,
-    hasHeroSliders: !!layoutConfig?.sections?.hero?.sliders,
-    sliderCount: layoutConfig?.sections?.hero?.sliders?.length || 0,
-    topLevelHero: !!layoutConfig?.hero,
-    topLevelHeroSliders: !!layoutConfig?.hero?.sliders,
-    topLevelSliderCount: layoutConfig?.hero?.sliders?.length || 0,
-  });
-  console.log('[ClothingHomePage] Full LayoutConfig:', JSON.stringify(layoutConfig, null, 2));
-  console.log('[ClothingHomePage] Editorial config:', layoutConfig?.sections?.marketing?.editorial);
+  // ... rest of the component logic ...
 
   // Deduplicate products to avoid key warnings and filter out inactive/deleted products
-  const uniqueProducts = (storeConfig.products || []).filter((product, index, self) =>
+  const rawProducts = storeConfig.products || [];
+  const uniqueProducts = rawProducts.filter((product, index, self) =>
     index === self.findIndex((t) => t.id === product.id)
   );
-  const products = filterActiveProducts(uniqueProducts);
+  const activeProducts = filterActiveProducts(uniqueProducts);
+
+  // Use real active products if available, otherwise if in preview, use all products (including drafts), 
+  // and if still none, use mock data
+  const products = activeProducts.length > 0
+    ? activeProducts
+    : (isPreview && rawProducts.length > 0
+      ? rawProducts
+      : (isPreview ? [
+        { id: 'p1', name: 'Premium Cotton Tee', price: 45, currency: 'USD', images: ['https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800'], slug: 'premium-tee', rating: 4.8, reviewCount: 124 },
+        { id: 'p2', name: 'Slim Fit Denim', price: 89, currency: 'USD', images: ['https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800'], slug: 'slim-denim', rating: 4.6, reviewCount: 89 },
+        { id: 'p3', name: 'Classic Trench Coat', price: 199, currency: 'USD', images: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800'], slug: 'trench-coat', rating: 4.9, reviewCount: 56, compareAtPrice: 249 },
+        { id: 'p4', name: 'Leather Chelsea Boots', price: 159, currency: 'USD', images: ['https://images.unsplash.com/photo-1638247025967-b4e38f787b76?q=80&w=800'], slug: 'chelsea-boots', rating: 4.7, reviewCount: 112 }
+      ] : []));
+
 
   // Hero slides data - use new slider structure with fallback to old format
   // For demo stores, helpers will return fallbacks; for real stores, try layoutConfig first, then helpers
   const isRealStore = shouldUseAPI(storeConfig.slug);
 
   // Debug logging for slider configuration
-  console.log('[ClothingHomePage] LayoutConfig sections.hero:', layoutConfig?.sections?.hero);
-  console.log('[ClothingHomePage] LayoutConfig hero (top-level):', layoutConfig?.hero);
-  console.log('[ClothingHomePage] Sliders found:', layoutConfig?.sections?.hero?.sliders?.length || 0);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[ClothingHomePage] LayoutConfig sections.hero:', layoutConfig?.sections?.hero);
+    console.log('[ClothingHomePage] LayoutConfig hero (top-level):', layoutConfig?.hero);
+    console.log('[ClothingHomePage] Sliders found:', layoutConfig?.sections?.hero?.sliders?.length || 0);
+  }
 
   // Try new structure first (sections.hero.sliders)
   let heroSlides: HeroSlide[] = [];
   if (layoutConfig?.sections?.hero?.sliders && Array.isArray(layoutConfig.sections.hero.sliders) && layoutConfig.sections.hero.sliders.length > 0) {
-    console.log('[ClothingHomePage] Using sections.hero.sliders structure');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[ClothingHomePage] Using sections.hero.sliders structure');
+    }
     heroSlides = layoutConfig.sections.hero.sliders
       .filter((slider) => slider && slider.image) // Filter out invalid sliders
       .map((slider) => {
@@ -90,13 +107,15 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
         const primaryButtonText = slider.primaryButton?.text?.trim() || '';
         const secondaryButtonText = slider.secondaryButton?.text?.trim() || '';
 
-        console.log('[ClothingHomePage] Slider:', {
-          id: slider.id,
-          image: slider.image ? 'present' : 'missing',
-          title: slider.title,
-          primaryButtonText,
-          secondaryButtonText,
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[ClothingHomePage] Slider:', {
+            id: slider.id,
+            image: slider.image ? 'present' : 'missing',
+            title: slider.title,
+            primaryButtonText,
+            secondaryButtonText,
+          });
+        }
 
         // Check badge visibility - use sections.hero.showBadges first, fallback to top-level hero.showBadges
         const showBadges = layoutConfig?.sections?.hero?.showBadges !== false &&
@@ -116,7 +135,9 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
       });
   } else if (layoutConfig?.hero?.sliders && Array.isArray(layoutConfig.hero.sliders) && layoutConfig.hero.sliders.length > 0) {
     // Fallback to top-level hero.sliders
-    console.log('[ClothingHomePage] Using top-level hero.sliders structure');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[ClothingHomePage] Using top-level hero.sliders structure');
+    }
     heroSlides = layoutConfig.hero.sliders
       .filter((slider) => slider && slider.image) // Filter out invalid sliders
       .map((slider) => {
@@ -142,7 +163,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
     // Fallback to old format (backward compatibility)
     heroSlides = [
       {
-        image: getBannerImage(storeConfig, 'hero_slide_1', 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=2070&auto=format&fit=crop'),
+        image: getBannerImage(storeConfig, 'hero_slide_1', 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=2000&auto=format&fit=crop'),
         badge: layoutConfig?.hero?.showBadges
           ? (isRealStore && layoutConfig?.text?.hero?.slides?.[0]?.badge ? layoutConfig.text.hero.slides[0].badge : getLayoutText(storeConfig, 'hero.badge', 'New Season'))
           : undefined,
@@ -154,7 +175,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
         secondaryButtonLink: `/${storeConfig.slug}/categories`,
       },
       {
-        image: getBannerImage(storeConfig, 'hero_slide_2', 'https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?q=80&w=2070&auto=format&fit=crop'),
+        image: getBannerImage(storeConfig, 'hero_slide_2', 'https://images.unsplash.com/photo-1617059063772-34532796ddb5?q=80&w=2000&auto=format&fit=crop'),
         badge: layoutConfig?.hero?.showBadges
           ? (isRealStore && layoutConfig?.text?.hero?.slides?.[1]?.badge ? layoutConfig.text.hero.slides[1].badge : getLayoutText(storeConfig, 'common.trending', 'Trending Now'))
           : undefined,
@@ -166,7 +187,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
         secondaryButtonLink: `/${storeConfig.slug}/categories/men`,
       },
       {
-        image: getBannerImage(storeConfig, 'hero_slide_3', 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop'),
+        image: getBannerImage(storeConfig, 'hero_slide_3', 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2000&auto=format&fit=crop'),
         badge: layoutConfig?.hero?.showBadges
           ? (isRealStore && layoutConfig?.text?.hero?.slides?.[2]?.badge ? layoutConfig.text.hero.slides[2].badge : getLayoutText(storeConfig, 'common.limited', 'Limited Edition'))
           : undefined,
@@ -182,6 +203,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(layoutConfig?.hero?.autoPlay !== false);
+  const [autoPlayResumeTime, setAutoPlayResumeTime] = useState<number | null>(null);
 
   // Auto-play functionality
   useEffect(() => {
@@ -194,13 +216,25 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
     return () => clearInterval(interval);
   }, [isAutoPlaying, heroSlides.length, layoutConfig?.hero?.autoPlay]);
 
+  // Handle auto-play resumption
+  useEffect(() => {
+    if (autoPlayResumeTime === null) return;
+
+    const timeout = setTimeout(() => {
+      setIsAutoPlaying(true);
+      setAutoPlayResumeTime(null);
+    }, autoPlayResumeTime);
+
+    return () => clearTimeout(timeout);
+  }, [autoPlayResumeTime]);
+
   const goToSlide = (index: number) => {
     if (heroSlides.length === 0) return;
     setCurrentSlide(Math.min(index, heroSlides.length - 1));
     setIsAutoPlaying(false);
     // Resume auto-play after 10 seconds
     if (layoutConfig?.hero?.autoPlay !== false) {
-      setTimeout(() => setIsAutoPlaying(true), 10000);
+      setAutoPlayResumeTime(10000);
     }
   };
 
@@ -209,7 +243,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     setIsAutoPlaying(false);
     if (layoutConfig?.hero?.autoPlay !== false) {
-      setTimeout(() => setIsAutoPlaying(true), 10000);
+      setAutoPlayResumeTime(10000);
     }
   };
 
@@ -218,7 +252,7 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
     setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
     setIsAutoPlaying(false);
     if (layoutConfig?.hero?.autoPlay !== false) {
-      setTimeout(() => setIsAutoPlaying(true), 10000);
+      setAutoPlayResumeTime(10000);
     }
   };
 
@@ -230,8 +264,9 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section - Carousel with Multiple Slides */}
-      {layoutConfig?.hero?.show !== false && heroSlides.length > 0 && (
+      {(layoutConfig?.sections?.hero?.show !== false || layoutConfig?.hero?.show !== false) && heroSlides.length > 0 && (
         <section
+          data-section="hero"
           className="relative h-[85vh] w-full overflow-hidden"
           onMouseEnter={() => setIsAutoPlaying(false)}
           onMouseLeave={() => layoutConfig?.hero?.autoPlay !== false && setIsAutoPlaying(true)}
@@ -354,25 +389,26 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
       )}
 
       {/* Benefits Strip */}
-      {layoutConfig?.features?.show !== false && (
-        <section className="py-8 bg-gray-50 border-b border-gray-100">
+      {layoutConfig?.sections?.features?.show !== false && (
+        <section
+          data-section="about"
+          className="py-8 bg-gray-50 border-b border-gray-100"
+        >
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-gray-200">
-              <div className="flex flex-col items-center justify-center gap-2 p-4">
-                <Truck className="h-6 w-6 text-gray-900" />
-                <h3 className="font-semibold text-gray-900">Free Shipping</h3>
-                <p className="text-sm text-gray-500">On all orders over ${storeConfig.settings.freeShippingThreshold}</p>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2 p-4">
-                <RefreshCw className="h-6 w-6 text-gray-900" />
-                <h3 className="font-semibold text-gray-900">Free Returns</h3>
-                <p className="text-sm text-gray-500">30-day money back guarantee</p>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-2 p-4">
-                <ShieldCheck className="h-6 w-6 text-gray-900" />
-                <h3 className="font-semibold text-gray-900">Secure Payment</h3>
-                <p className="text-sm text-gray-500">100% secure checkout process</p>
-              </div>
+              {(layoutConfig?.sections?.features?.items || [
+                { icon: 'Truck', title: 'Free Shipping', description: `On all orders over $${storeConfig.settings.freeShippingThreshold}` },
+                { icon: 'RefreshCw', title: 'Free Returns', description: '30-day money back guarantee' },
+                { icon: 'ShieldCheck', title: 'Secure Payment', description: '100% secure checkout process' }
+              ]).map((item, idx) => {
+                return (
+                  <div key={idx} className="flex flex-col items-center justify-center gap-2 p-4">
+                    <DynamicIcon name={item.icon} className="h-6 w-6 text-gray-900" />
+                    <h3 className="font-semibold text-gray-900">{item.title}</h3>
+                    <p className="text-sm text-gray-500">{item.description}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -380,7 +416,10 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
 
       {/* Categories Grid - Adaptive */}
       {layoutConfig?.sections?.categories?.show !== false && (
-        <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+        <section
+          data-section="categories"
+          className="py-12 md:py-20 px-4 sm:px-6 lg:px-8"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="flex flex-col md:flex-row justify-between items-end mb-8 md:mb-12 gap-4">
               <div>
@@ -460,22 +499,28 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
       )}
 
       {/* Lookbook / Style Guide Section */}
-      {layoutConfig?.sections?.marketing?.show !== false && (
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-stone-50">
+      {layoutConfig?.sections?.marketing?.editorial?.show !== false && (
+        <section
+          data-section="editorial"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-stone-50"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-20 items-center">
               <div className="relative">
                 <div className="aspect-[4/5] rounded-lg overflow-hidden relative">
                   <ImageWithFallback
-                    src={layoutConfig?.sections?.marketing?.editorial?.image}
+                    src={layoutConfig?.sections?.marketing?.editorial?.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000&auto=format&fit=crop'}
                     alt="Editorial Lookbook"
                     className="w-full h-full object-cover"
                     skeletonAspectRatio="4/5"
                   />
                 </div>
                 {/* Decorative elements */}
-                {layoutConfig?.sections?.marketing?.editorial?.detailImage && (
-                  <div className="absolute -bottom-8 -right-8 w-48 h-48 bg-white p-4 shadow-xl rounded-lg hidden md:block animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                {(layoutConfig?.sections?.marketing?.editorial?.detailImage) && (
+                  <div
+                    className="absolute w-48 h-48 bg-white p-4 shadow-xl rounded-lg hidden md:block z-20 animate-fade-in-up"
+                    style={{ bottom: '-2rem', right: '-2rem', animationDelay: '0.2s' }}
+                  >
                     <div className="w-full h-full relative">
                       <ImageWithFallback
                         src={layoutConfig.sections.marketing.editorial.detailImage}
@@ -488,12 +533,14 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
                 )}
               </div>
               <div className="space-y-8">
-                <span className="text-sm font-bold tracking-widest text-gray-500 uppercase">
-                  {layoutConfig?.sections?.marketing?.editorial?.label || "Editorial"}
-                </span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-bold tracking-widest text-gray-500 uppercase">
+                    {layoutConfig?.sections?.marketing?.editorial?.badgeText || "Lookbook"}
+                  </span>
+                </div>
                 <h2 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight text-gray-900">
                   {layoutConfig?.sections?.marketing?.editorial?.title ? (
-                    layoutConfig.sections.marketing.editorial.title.split('\n').map((line, idx, arr) => (
+                    layoutConfig.sections.marketing.editorial.title.split('\n').map((line: string, idx: number, arr: string[]) => (
                       <span key={idx}>
                         {line}
                         {idx < arr.length - 1 && <br />}
@@ -510,19 +557,25 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
                   {layoutConfig?.sections?.marketing?.editorial?.description || "Explore our latest editorial featuring timeless pieces crafted for the contemporary wardrobe. From essential basics to statement outwear, find your signature look."}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  {/* Primary button - only show if text exists */}
-                  {layoutConfig?.sections?.marketing?.editorial?.primaryButtonText && layoutConfig.sections.marketing.editorial.primaryButtonText.trim() !== '' && (
-                    <Link href={layoutConfig.sections.marketing.editorial.primaryButtonLink || `/${storeConfig.slug}/style-guide`}>
+                  {/* Primary button */}
+                  {layoutConfig?.sections?.marketing?.editorial?.primaryButton?.text && (
+                    <Link href={layoutConfig.sections.marketing.editorial.primaryButton.link?.startsWith('/')
+                      ? `/${storeConfig.slug}${layoutConfig.sections.marketing.editorial.primaryButton.link}`
+                      : (layoutConfig.sections.marketing.editorial.primaryButton.link || `/${storeConfig.slug}/style-guide`)
+                    }>
                       <Button className="rounded-full px-8 py-6 bg-gray-900 hover:bg-black text-white transition-all">
-                        {layoutConfig.sections.marketing.editorial.primaryButtonText}
+                        {layoutConfig.sections.marketing.editorial.primaryButton.text}
                       </Button>
                     </Link>
                   )}
-                  {/* Secondary button - only show if text exists */}
-                  {layoutConfig?.sections?.marketing?.editorial?.secondaryButtonText && layoutConfig.sections.marketing.editorial.secondaryButtonText.trim() !== '' && (
-                    <Link href={layoutConfig.sections.marketing.editorial.secondaryButtonLink || `/${storeConfig.slug}/about`}>
+                  {/* Secondary button */}
+                  {layoutConfig?.sections?.marketing?.editorial?.secondaryButton?.text && (
+                    <Link href={layoutConfig.sections.marketing.editorial.secondaryButton.link?.startsWith('/')
+                      ? `/${storeConfig.slug}${layoutConfig.sections.marketing.editorial.secondaryButton.link}`
+                      : (layoutConfig.sections.marketing.editorial.secondaryButton.link || `/${storeConfig.slug}/about`)
+                    }>
                       <Button variant="outline" className="rounded-full px-8 py-6 border-gray-300 hover:bg-white hover:border-gray-900 transition-all">
-                        {layoutConfig.sections.marketing.editorial.secondaryButtonText}
+                        {layoutConfig.sections.marketing.editorial.secondaryButton.text}
                       </Button>
                     </Link>
                   )}
@@ -535,11 +588,14 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
 
       {/* Trending Products Carousel/Grid */}
       {layoutConfig?.sections?.featuredProducts?.show !== false && (
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-white">
+        <section
+          data-section="featuredProducts"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-white"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16">
               <span className="text-sm font-bold tracking-widest text-gray-500 uppercase mb-3 block">
-                Curated For You
+                {layoutConfig?.sections?.featuredProducts?.eyebrow || "Curated For You"}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">
                 {layoutConfig?.sections?.featuredProducts?.title || getLayoutText(storeConfig, 'sections.featuredProducts.title', 'Trending Now')}
@@ -713,8 +769,6 @@ export function ClothingHomePage({ storeConfig }: ClothingHomePageProps) {
         </section>
       )}
 
-      {/* Promotional Banner */}
-      <PromoBanner config={layoutConfig?.sections?.promoBanner} layoutStyle="clothing" />
     </div>
   );
 }

@@ -7,13 +7,17 @@ import { ShoppingCart, Search, Star, Flame, Leaf, Wheat, Info, ChevronRight, Che
 import { useState, useRef, useEffect } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
+import { useStore } from '@/lib/store-context';
 
 interface MenuPageProps {
   storeConfig: StoreConfig;
   categorySlug?: string;
 }
 
-export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
+export function MenuPage({ storeConfig: initialConfig, categorySlug }: MenuPageProps) {
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const categories = storeConfig.categories || [];
   const menuItems = storeConfig.menuItems || [];
   const [selectedCategory, setSelectedCategory] = useState(categorySlug || '');
@@ -76,7 +80,7 @@ export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Menu Header / Hero */}
-      <div className="relative bg-black text-white py-16 px-4 overflow-hidden">
+      <div data-section="hero" className="relative bg-black text-white py-16 px-4 overflow-hidden">
         {/* Header background - can be configured via layoutConfig if needed */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
 
@@ -88,7 +92,7 @@ export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
         </div>
       </div>
 
-      <div className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm py-4 transition-all border-b border-gray-200 shadow-sm">
+      <div data-section="menu-list" className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm py-4 transition-all border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Search */}

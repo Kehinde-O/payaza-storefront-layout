@@ -1,29 +1,29 @@
 'use client';
 
-import { StoreConfig, ProductReview, StoreProduct, StoreCategory } from '@/lib/store-types';
-import { Button } from '@/components/ui/button';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { Modal } from '@/components/ui/modal';
-import { ProductRating } from '@/components/ui/product-rating';
+import { StoreConfig, ProductReview, StoreProduct, StoreCategory } from '../../../lib/store-types';
+import { Button } from '../../../components/ui/button';
+import { Breadcrumbs } from '../../../components/ui/breadcrumbs';
+import { Modal } from '../../../components/ui/modal';
+import { ProductRating } from '../../../components/ui/product-rating';
 import { ShoppingCart, Heart, Star, Truck, CheckCircle, ThumbsUp, User, Minus, Plus, Ruler, Share2, Info, ChevronDown } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
-import { useStore } from '@/lib/store-context';
-import { useToast } from '@/components/ui/toast';
+import { useStore } from '../../../lib/store-context';
+import { useToast } from '../../../components/ui/toast';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { useAnalytics } from '@/hooks/use-analytics';
-import { customerService, Address } from '@/lib/services/customer.service';
-import { GuestCheckoutModal } from '@/components/ui/guest-checkout-modal';
-import { getGuestUserInfo, saveGuestUserInfo, GuestUserInfo } from '@/lib/guest-user';
-import { ProductCard } from '@/components/ui/product-card';
+import { useAuth } from '../../../lib/auth-context';
+import { useAnalytics } from '../../../hooks/use-analytics';
+import { customerService, Address } from '../../../lib/services/customer.service';
+import { GuestCheckoutModal } from '../../../components/ui/guest-checkout-modal';
+import { getGuestUserInfo, saveGuestUserInfo, GuestUserInfo } from '../../../lib/guest-user';
+import { ProductCard } from '../../../components/ui/product-card';
 import Image from 'next/image';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { ButtonLoader } from '@/components/ui/page-loader';
-import { extractImageUrls } from '@/lib/store-config-utils';
-import { OutOfStockOverlay } from '@/components/ui/out-of-stock-overlay';
-import { cn, formatCurrency, filterActiveProducts } from '@/lib/utils';
-import { shippingService, ShippingMethod } from '@/lib/services/shipping.service';
-import { countries, getCountryByName, getCitiesByCountry } from '@/lib/countries';
+import { ImageWithFallback } from '../../../components/ui/image-with-fallback';
+import { ButtonLoader } from '../../../components/ui/page-loader';
+import { extractImageUrls } from '../../../lib/store-config-utils';
+import { OutOfStockOverlay } from '../../../components/ui/out-of-stock-overlay';
+import { cn, formatCurrency, filterActiveProducts } from '../../../lib/utils';
+import { shippingService, ShippingMethod } from '../../../lib/services/shipping.service';
+import { countries, getCountryByName, getCitiesByCountry } from '../../../lib/countries';
 
 interface ProductDetailPageProps {
   storeConfig: StoreConfig;
@@ -79,7 +79,7 @@ function StarRating({ rating, size = 'md', className = '' }: { rating: number; s
 }
 
 // Review Card Component
-import { ReviewForm } from '@/components/ui/review-form';
+import { ReviewForm } from '../../../components/ui/review-form';
 
 function ReviewCard({ review }: { review: ProductReview }) {
   return (
@@ -149,14 +149,17 @@ function ReviewCard({ review }: { review: ProductReview }) {
   );
 }
 
-export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPageProps) {
+export function ProductDetailPage({ storeConfig: initialConfig, productSlug }: ProductDetailPageProps) {
+  const { store, addToCart, isCartLoading, toggleWishlist, isInWishlist, isWishlistLoading, setBuyNowItem } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const products = filterActiveProducts(storeConfig.products || []);
   const product = products.find(p => p.slug === productSlug);
-  const { addToCart, isCartLoading, toggleWishlist, isInWishlist, isWishlistLoading, setBuyNowItem } = useStore();
   const { addToast } = useToast();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { trackEvent } = useAnalytics();
+  const productDetailConfig = storeConfig.layoutConfig?.pages?.productDetail;
 
   // Related products logic
   const relatedProducts = useMemo(() => {
@@ -227,7 +230,8 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
   useEffect(() => {
     if (product && product.images && product.images.length > 0 && selectedImage >= product.images.length) {
       // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => setSelectedImage(0), 0);
+      const timer = setTimeout(() => setSelectedImage(0), 0);
+      return () => clearTimeout(timer);
     }
   }, [product, selectedImage]);
   const [selectedColor, setSelectedColor] = useState<string | null>(
@@ -787,14 +791,16 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
                       {selectedSize || 'Select Size'}
                     </span>
                   </div>
-                  <a 
-                    href={`/${storeConfig.slug}/size-guide`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 underline decoration-gray-400 underline-offset-4"
-                  >
-                    <Ruler className="h-3.5 w-3.5" /> Size guide
-                  </a>
+                  {productDetailConfig?.showSizeGuide !== false && (
+                    <a 
+                      href={`/${storeConfig.slug}/size-guide`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 underline decoration-gray-400 underline-offset-4"
+                    >
+                      <Ruler className="h-3.5 w-3.5" /> Size guide
+                    </a>
+                  )}
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5">
                   {sizeVariants.map((variant) => {
@@ -841,25 +847,28 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
                </div>
 
                <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <Button
-                data-add-to-cart
-                size="lg"
-                     onClick={handleAddToCart}
-                     disabled={isCartLoading || isOutOfStock}
-                     className="flex-1 bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-50 rounded-full h-14 text-base font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCartLoading ? (
-                  <>
-                    <ButtonLoader className="mr-2" />
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Add to Cart
-                  </>
-                )}
-                  </Button>
+              {productDetailConfig?.showAddToCart !== false && (
+                <Button
+                  data-add-to-cart
+                  size="lg"
+                       onClick={handleAddToCart}
+                       disabled={isCartLoading || isOutOfStock}
+                       className="flex-1 bg-white border-2 border-gray-900 text-gray-900 hover:bg-gray-50 rounded-full h-14 text-base font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isCartLoading ? (
+                    <>
+                      <ButtonLoader className="mr-2" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Add to Cart
+                    </>
+                  )}
+                </Button>
+              )}
+              {productDetailConfig?.showAddToCart !== false && (
                   <Button
                      size="lg"
                      onClick={handleBuyNow}
@@ -874,8 +883,9 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
                      ) : (
                        'Buy Now'
                      )}
-              </Button>
-              {storeConfig.features.wishlist && (
+                  </Button>
+              )}
+                  {storeConfig.features.wishlist && productDetailConfig?.showWishlist !== false && (
                 <Button
                   variant="outline"
                   size="lg"
@@ -1165,6 +1175,7 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
         </div>
 
         {/* Reviews Section */}
+        {productDetailConfig?.showReviews !== false && (
           <div className="mt-20 pt-16 border-t border-gray-200">
           <div className="max-w-4xl">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10">
@@ -1261,9 +1272,10 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
             )}
           </div>
         </div>
+        )}
 
         {/* Related Products */}
-        {relatedProducts.length > 0 && (
+        {productDetailConfig?.showRelatedProducts !== false && relatedProducts.length > 0 && (
           <div className="mt-20 pt-16 border-t border-gray-200">
             <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-8">You Might Also Like</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

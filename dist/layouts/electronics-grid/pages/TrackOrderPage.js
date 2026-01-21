@@ -4,7 +4,8 @@ import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, Loader2, XCirc
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '../../../components/ui/button';
-import { orderService } from '../../../lib/services/order.service';
+// Note: orderService removed - this page is shared and not editable in the editor
+// Order tracking functionality not available in preview mode
 import { useToast } from '../../../components/ui/toast';
 import { useLoading } from '../../../lib/loading-context';
 export function TrackOrderPage({ storeConfig }) {
@@ -32,7 +33,9 @@ export function TrackOrderPage({ storeConfig }) {
                 setError(null);
                 startBackendLoading();
                 try {
-                    const orderData = await orderService.trackOrder(orderNumberFromUrl);
+                    // Note: orderService removed - order tracking not available in preview mode
+                    setError('Order tracking is not available in preview mode. This feature requires the order service.');
+                    const orderData = null;
                     processOrderData(orderData);
                 }
                 catch (error) {
@@ -254,8 +257,9 @@ export function TrackOrderPage({ storeConfig }) {
         setError(null);
         startBackendLoading();
         try {
-            // Use tracking number if provided, otherwise use order number
-            const orderData = await orderService.trackOrder(trackingNumber || orderId, email);
+            // Note: orderService removed - order tracking not available in preview mode
+            setError('Order tracking is not available in preview mode. This feature requires the order service.');
+            const orderData = null;
             processOrderData(orderData);
         }
         catch (error) {

@@ -19,7 +19,7 @@ interface ToastContextType {
   removeToast: (id: string) => void;
 }
 
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+export const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -31,7 +31,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const addToast = useCallback((message: string, type: ToastType = 'info', duration = 3000) => {
     const id = Math.random().toString(36).substring(2, 9);
     const newToast = { id, message, type, duration };
-    
+
     setToasts((prev) => [...prev, newToast]);
 
     if (duration > 0) {
@@ -80,10 +80,10 @@ function ToastContainer({ toasts, removeToast }: { toasts: Toast[]; removeToast:
             {toast.type === 'error' && <AlertCircle className="h-5 w-5" />}
             {toast.type === 'info' && <Info className="h-5 w-5" />}
           </div>
-          
+
           <p className="flex-1 text-sm font-medium">{toast.message}</p>
-          
-          <button 
+
+          <button
             onClick={() => removeToast(toast.id)}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >

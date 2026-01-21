@@ -25,25 +25,30 @@ export function VideoPlayer({ src, poster, context = 'inline', autoplay = false,
     }, [hasError, onError, src]);
     // Background video context - use iframe for YouTube/Vimeo, video tag for direct
     if (context === 'background') {
-        if (!videoInfo)
+        // Helper to render poster fallback
+        const renderFallback = () => {
+            if (poster) {
+                return (_jsx("img", { src: poster, alt: "Hero Background", className: cn('absolute inset-0 w-full h-full object-cover', className) }));
+            }
             return null;
+        };
+        if (hasError)
+            return renderFallback();
+        if (!videoInfo)
+            return renderFallback();
         // YouTube or Vimeo - use iframe
         if (videoInfo.platform === 'youtube' || videoInfo.platform === 'vimeo') {
             const embedUrl = getBackgroundVideoEmbedUrl(src);
             if (!embedUrl)
-                return null;
-            return (_jsx("iframe", { ref: iframeRef, src: embedUrl, className: cn('absolute inset-0 w-full h-full', className), allow: "autoplay; encrypted-media", allowFullScreen: true, style: { border: 'none' }, title: "Background video" }));
+                return renderFallback();
+            return (_jsx("iframe", { ref: iframeRef, src: embedUrl, className: cn('absolute inset-0 w-full h-full', className), allow: "autoplay; encrypted-media", allowFullScreen: true, style: { border: 'none', pointerEvents: 'none' }, title: "Background video" }));
         }
         // Direct video file - use video tag
         if (videoInfo.platform === 'direct' && videoInfo.directUrl) {
             return (_jsx("video", { ref: videoRef, src: videoInfo.directUrl, poster: poster, autoPlay: true, muted: true, loop: true, playsInline: true, className: cn('absolute inset-0 w-full h-full object-cover', className), onError: () => setHasError(true) }));
         }
-        // Instagram/TikTok - not ideal for background, but try to render
-        if (videoInfo.platform === 'instagram' || videoInfo.platform === 'tiktok') {
-            // For these platforms, we might want to show a placeholder or fallback
-            return null;
-        }
-        return null;
+        // Instagram/TikTok or unknown - not supported for background, use fallback
+        return renderFallback();
     }
     // Embedded context - use iframe with controls
     if (context === 'embedded') {

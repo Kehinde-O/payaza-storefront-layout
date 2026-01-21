@@ -9,7 +9,7 @@ export { ProductsPage as FoodProductsPage } from './layouts/food/pages/ProductsP
 export { ProductDetailPage as FoodProductDetailPage } from './layouts/food/pages/ProductDetailPage';
 export { CategoryPage as FoodCategoryPage } from './layouts/food/pages/CategoryPage';
 export { CategoriesPage as FoodCategoriesPage } from './layouts/food/pages/CategoriesPage';
-export { MenuPage } from './layouts/food/pages/MenuPage';
+export { MenuPage as FoodMenuPage } from './layouts/food/pages/MenuPage';
 export { AboutPage as FoodAboutPage } from './layouts/food/pages/AboutPage';
 export { ContactPage as FoodContactPage } from './layouts/food/pages/ContactPage';
 
@@ -136,9 +136,45 @@ export { WishlistPage } from './layouts/shared/pages/WishlistPage';
 // JSON utilities
 export { getLayoutJSON, layoutJSONMap } from './json/json-map';
 
+// Alignment Schema utilities (replaces old requirements JSON)
+export { getLayoutMetadata, layoutMetadataMap } from './editor/alignment-schemas/metadata';
+export { getAlignmentSchema, alignmentSchemasMap } from './editor/alignment-schemas';
+
 // Context Providers and Hooks
-export { ToastProvider, useToast } from './components/ui/toast';
-export { StoreProvider, useStore } from './lib/store-context';
-export { LoadingProvider, useLoading } from './lib/loading-context';
-export { AuthProvider, useAuth } from './lib/auth-context';
+export { ToastProvider, useToast, ToastContext } from './components/ui/toast';
+export { AlertModalProvider, useAlertModal } from './components/ui/alert-modal';
+export { StoreProvider, useStore, StoreContext } from './lib/store-context';
+export { LoadingProvider, useLoading, LoadingContext } from './lib/loading-context';
+export { AuthProvider, useAuth, AuthContext } from './lib/auth-context';
+
+// Types
+export type {
+  StoreConfig,
+  StoreProduct,
+  StoreService,
+  StoreCategory,
+  StoreBranding,
+  StoreLayoutType
+} from './lib/store-types';
+
+// Alignment Schemas
+export * from './lib/alignment-schemas';
+
+// Preview Components and Data
+export { LayoutPreview } from './preview';
+export { ShadowDOMWrapper } from './preview/ShadowDOMWrapper';
+export { PreviewRouter } from './preview/PreviewRouter';
+export {
+  getFoodPreviewData,
+  getClothingPreviewData,
+  getBookingPreviewData,
+  getFoodModernPreviewData,
+  getClothingMinimalPreviewData,
+  getBookingAgendaPreviewData,
+  getElectronicsGridPreviewData,
+  getElectronicsPreviewData,
+  getMotivationalSpeakerPreviewData,
+  getPreviewDataByLayout,
+  getLayoutIdByStoreSlug,
+} from './lib/preview-data';
 

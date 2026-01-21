@@ -3,6 +3,6 @@ interface MenuPageProps {
     storeConfig: StoreConfig;
     categorySlug?: string;
 }
-export declare function MenuPage({ storeConfig, categorySlug }: MenuPageProps): import("react/jsx-runtime").JSX.Element;
+export declare function MenuPage({ storeConfig: initialConfig, categorySlug }: MenuPageProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=MenuPage.d.ts.map

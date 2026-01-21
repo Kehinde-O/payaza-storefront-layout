@@ -13,7 +13,7 @@ interface TestimonialCardProps {
 
 export function TestimonialCard({ testimonial, className }: TestimonialCardProps) {
   return (
-    <div className={cn(
+    <div data-section="testimonials" className={cn(
       'bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100',
       'hover:shadow-lg transition-all duration-300',
       className

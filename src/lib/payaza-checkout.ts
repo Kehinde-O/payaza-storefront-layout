@@ -94,7 +94,7 @@ interface PayazaCheckoutSetupConfig {
 }
 
 interface PayazaCheckoutInstance {
-  setCallback: (callback: (response: { transactionRef?: string; reference?: string; [key: string]: unknown }) => void) => void;
+  setCallback: (callback: (response: { transactionRef?: string; reference?: string;[key: string]: unknown }) => void) => void;
   setOnClose: (onClose: () => void) => void;
   showPopup: () => void;
 }
@@ -123,26 +123,37 @@ export const loadPayazaSDK = (): Promise<void> => {
     const existingScript = document.querySelector('script[src*="payaza"]');
     if (existingScript) {
       console.log('Payaza script already in DOM, waiting for load...');
-      // Wait for it to load
-      const checkInterval = setInterval(() => {
-        if (window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function') {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
-      
-      existingScript.addEventListener('load', () => {
-        clearInterval(checkInterval);
+
+      const cleanup = () => {
+        if (checkInterval) clearInterval(checkInterval);
+        existingScript.removeEventListener('load', onLoad);
+        existingScript.removeEventListener('error', onError);
+      };
+
+      const onLoad = () => {
+        cleanup();
         // Give SDK time to initialize
         setTimeout(() => {
           console.log('Existing script loaded, SDK available:', !!(window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function'));
           resolve();
         }, 300);
-      });
-      existingScript.addEventListener('error', () => {
-        clearInterval(checkInterval);
+      };
+
+      const onError = () => {
+        cleanup();
         reject(new Error('Failed to load Payaza SDK from existing script'));
-      });
+      };
+
+      // Wait for it to load
+      const checkInterval = setInterval(() => {
+        if (window.PayazaCheckout && typeof window.PayazaCheckout.setup === 'function') {
+          cleanup();
+          resolve();
+        }
+      }, 100);
+
+      existingScript.addEventListener('load', onLoad);
+      existingScript.addEventListener('error', onError);
       return;
     }
 
@@ -153,7 +164,11 @@ export const loadPayazaSDK = (): Promise<void> => {
     const script = document.createElement('script');
     script.src = sdkUrl;
     script.defer = true;
-    
+
+    // We don't need to manually remove these listeners as the element is ours and we are inside a promise
+    // that settles once. However, for strict correctness/memory safety if the promise logic was complex/long-lived:
+    // script.onload = null; script.onerror = null;
+
     script.onload = () => {
       console.log('Payaza SDK script loaded, waiting for initialization...');
       // Wait for SDK to initialize
@@ -164,7 +179,7 @@ export const loadPayazaSDK = (): Promise<void> => {
           resolve();
         }
       }, 100);
-      
+
       // Timeout after 5 seconds
       setTimeout(() => {
         clearInterval(checkInterval);
@@ -175,11 +190,11 @@ export const loadPayazaSDK = (): Promise<void> => {
         }
       }, 5000);
     };
-    
+
     script.onerror = () => {
       reject(new Error(`Failed to load Payaza SDK from ${sdkUrl}`));
     };
-    
+
     document.head.appendChild(script);
   });
 };
@@ -303,13 +318,17 @@ export const initiatePayazaCheckout = async (
     // Load SDK if not already loaded with timeout
     const SDK_LOAD_TIMEOUT = 10000; // 10 seconds
     const loadPromise = loadPayazaSDK();
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Payaza SDK loading timeout. Please check your internet connection and try again.')), SDK_LOAD_TIMEOUT)
-    );
+
+    let timeoutId: NodeJS.Timeout;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Payaza SDK loading timeout. Please check your internet connection and try again.')), SDK_LOAD_TIMEOUT);
+    });
 
     try {
       await Promise.race([loadPromise, timeoutPromise]);
+      if (timeoutId!) clearTimeout(timeoutId!);
     } catch (loadError: any) {
+      if (timeoutId!) clearTimeout(timeoutId!);
       if (loadError?.message?.includes('timeout')) {
         throw new Error('Payment system is loading. Please wait a moment and try again.');
       }
@@ -347,7 +366,7 @@ export const initiatePayazaCheckout = async (
     if (config.orderNumber) {
       additionalDetails.orderNumber = config.orderNumber;
     }
-    
+
     // Customer information
     if (config.email) {
       additionalDetails.customerEmail = config.email;
@@ -361,7 +380,7 @@ export const initiatePayazaCheckout = async (
     if (config.phone) {
       additionalDetails.customerPhone = config.phone;
     }
-    
+
     // Shipping address information
     if (config.shippingAddress) {
       additionalDetails.shippingAddress = {
@@ -374,14 +393,14 @@ export const initiatePayazaCheckout = async (
         zipCode: config.shippingAddress.zipCode,
       };
     }
-    
+
     // Transaction details
     additionalDetails.amount = config.amount;
     additionalDetails.currency = validatedCurrency;
     if (config.description) {
       additionalDetails.description = config.description;
     }
-    
+
     // Timestamp for tracking
     additionalDetails.timestamp = new Date().toISOString();
 
@@ -408,31 +427,31 @@ export const initiatePayazaCheckout = async (
     let paymentSuccessful = false;
 
     // Set callback for payment response
-    payazaCheckout.setCallback((callbackResponse: { transactionRef?: string; reference?: string; type?: string; status?: number; data?: PayazaSuccessData; [key: string]: unknown }) => {
+    payazaCheckout.setCallback((callbackResponse: { transactionRef?: string; reference?: string; type?: string; status?: number; data?: PayazaSuccessData;[key: string]: unknown }) => {
       // TO BE REMOVED FOR PRODUCTION - Temporary logging for debugging
       console.log('=== PAYAZA CHECKOUT SDK CALLBACK DATA (TO BE REMOVED FOR PRODUCTION) ===');
       console.log('Full callback response:', JSON.stringify(callbackResponse, null, 2));
       console.log('=== END OF CALLBACK DATA ===');
-      
+
       // Parse the callback response structure
       // Payaza returns: { type: "success", status: 201, data: { ... } }
-      const isSuccessResponse = callbackResponse.type === 'success' || 
-                                (callbackResponse.status !== undefined && callbackResponse.status >= 200 && callbackResponse.status < 300);
-      
+      const isSuccessResponse = callbackResponse.type === 'success' ||
+        (callbackResponse.status !== undefined && callbackResponse.status >= 200 && callbackResponse.status < 300);
+
       if (isSuccessResponse && callbackResponse.data) {
         // Full success response with transaction details
         const successData = callbackResponse.data as PayazaSuccessData;
-        const transactionRef = successData.transaction_reference || 
-                              callbackResponse.transactionRef || 
-                              callbackResponse.reference || 
-                              reference;
-        
+        const transactionRef = successData.transaction_reference ||
+          callbackResponse.transactionRef ||
+          callbackResponse.reference ||
+          reference;
+
         const fullCallback: PayazaSuccessCallback = {
           type: callbackResponse.type as 'success' || 'success',
           status: callbackResponse.status || 201,
           data: successData,
         };
-        
+
         console.log('[Payaza Callback] Transaction successful:', {
           transactionRef,
           payazaReference: successData.payaza_reference,
@@ -440,11 +459,11 @@ export const initiatePayazaCheckout = async (
           fee: successData.transaction_fee,
           currency: successData.currency?.code,
         });
-        
+
         // Mark payment as successful BEFORE calling onSuccess
         // This ensures onClose knows payment succeeded even if it fires immediately after
         paymentSuccessful = true;
-        
+
         // Call the success handler with full callback data
         if (config.onSuccess) {
           config.onSuccess({
@@ -456,15 +475,15 @@ export const initiatePayazaCheckout = async (
         }
       } else if (isSuccessResponse) {
         // Fallback for older callback format or minimal response
-        const transactionRef = callbackResponse.transactionRef || 
-                              callbackResponse.reference || 
-                              reference;
-        
+        const transactionRef = callbackResponse.transactionRef ||
+          callbackResponse.reference ||
+          reference;
+
         console.log('[Payaza Callback] Transaction reference:', transactionRef);
-        
+
         // Mark payment as successful
         paymentSuccessful = true;
-        
+
         // Call the success handler if provided
         if (config.onSuccess) {
           config.onSuccess({
@@ -551,7 +570,7 @@ export const generateCheckoutConfig = (
       const itemsCurrency = getCurrencyFromItems(items);
       currency = validateAndNormalizeCurrency(itemsCurrency);
     }
-    
+
     // Double-check: Ensure currency is a valid 3-letter ISO code
     if (!currency || currency.length !== 3 || !/^[A-Z]{3}$/.test(currency)) {
       throw new Error(`Invalid currency format: "${currency}". Must be a 3-letter ISO 4217 code.`);

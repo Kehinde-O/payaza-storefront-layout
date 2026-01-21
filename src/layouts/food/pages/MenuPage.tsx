@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Search, Star, Flame, Leaf, Wheat, Info, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { useStore } from '@/lib/store-context';
 import { cn, formatCurrency } from '@/lib/utils';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
@@ -13,7 +14,10 @@ interface MenuPageProps {
   categorySlug?: string;
 }
 
-export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
+export function MenuPage({ storeConfig: initialConfig, categorySlug }: MenuPageProps) {
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const categories = storeConfig.categories || [];
   const menuItems = storeConfig.menuItems || [];
   const [selectedCategory, setSelectedCategory] = useState(categorySlug || '');
@@ -23,6 +27,7 @@ export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
   const [showRightGradient, setShowRightGradient] = useState(true);
 
   const primaryColor = storeConfig.branding.primaryColor;
+  const menuConfig = storeConfig.layoutConfig?.pages?.menu;
 
   // Icons mapping for dietary info
   const dietaryIcons: Record<string, React.ElementType> = {
@@ -76,19 +81,25 @@ export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Menu Header / Hero */}
-      <div className="relative bg-black text-white py-16 px-4 overflow-hidden">
-        {/* Header background - can be configured via layoutConfig if needed */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+      {menuConfig?.menuHeader?.show !== false && (
+        <div data-section="hero" className="relative bg-black text-white py-16 px-4 overflow-hidden">
+          {/* Header background - can be configured via layoutConfig if needed */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
 
-        <div className="relative z-10 container mx-auto text-center max-w-4xl">
-          <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">Our Menu</h1>
-          <p className="text-lg text-gray-200 max-w-2xl mx-auto">
-            Discover our wide range of delicious dishes, crafted with passion and the finest ingredients.
-          </p>
+          <div className="relative z-10 container mx-auto text-center max-w-4xl">
+            <h1 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+              {menuConfig?.menuHeader?.title || "Our Menu"}
+            </h1>
+            <p className="text-lg text-gray-200 max-w-2xl mx-auto">
+              {menuConfig?.menuHeader?.subtitle || "Discover our wide range of delicious dishes, crafted with passion and the finest ingredients."}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm py-4 transition-all border-b border-gray-200 shadow-sm">
+      {menuConfig?.menuGrid?.show !== false && (
+        <>
+          <div data-section="menu-list" className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm py-4 transition-all border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             {/* Search */}
@@ -268,6 +279,8 @@ export function MenuPage({ storeConfig, categorySlug }: MenuPageProps) {
           </div>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

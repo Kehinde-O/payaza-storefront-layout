@@ -1,8 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { cartService, Cart, CartItem } from '@/lib/services/cart.service';
-import { shouldUseAPI } from '@/lib/utils/demo-detection';
+// Note: cartService removed - using StoreContext only (localStorage-based)
+// This hook now uses StoreContext for all cart operations
 import { StoreConfig } from '@/lib/store-types';
 import { useStore } from '@/lib/store-context';
+
+// Types for cart (no longer from service)
+export interface Cart {
+  items: CartItem[];
+  total: number;
+}
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  quantity: number;
+  price: number;
+  product?: any;
+}
 
 export interface UseCartApiResult {
   cart: Cart | null;
@@ -16,127 +30,115 @@ export interface UseCartApiResult {
 }
 
 /**
- * Hook to manage cart with API sync for non-demo stores
+ * Hook to manage cart - uses StoreContext only (localStorage-based)
+ * Note: cartService removed - all cart operations use StoreContext
  */
 export function useCartApi(storeConfig: StoreConfig | null): UseCartApiResult {
   const { cart: localCart, addToCart: localAddToCart, updateCartQuantity, removeFromCart: localRemoveFromCart } = useStore();
-  const [apiCart, setApiCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const syncCart = useCallback(async () => {
-    if (!storeConfig || !shouldUseAPI(storeConfig.slug)) {
-      return; // Use local storage for demo stores
-    }
+  // Convert localCart to Cart format
+  const apiCart: Cart | null = localCart.length > 0 ? {
+    items: localCart.map(item => ({
+      id: item.id,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+      product: item.product,
+    })),
+    total: localCart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+  } : null;
 
-    try {
-      setLoading(true);
-      setError(null);
-      const cart = await cartService.getCart();
-      setApiCart(cart);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to sync cart';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  }, [storeConfig]);
+  const syncCart = useCallback(async () => {
+    // No-op: cart is managed by StoreContext (localStorage-based)
+    // This function exists for API compatibility
+  }, []);
 
   const addItem = useCallback(
     async (productId: string, quantity: number, options?: Record<string, any>) => {
       if (!storeConfig) return;
 
-      if (shouldUseAPI(storeConfig.slug)) {
-        try {
-          setLoading(true);
-          await cartService.addItem(productId, quantity, options);
-          await syncCart();
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to add item';
-          setError(errorMessage);
-          throw err;
-        } finally {
-          setLoading(false);
+      try {
+        setLoading(true);
+        setError(null);
+        // Find product from storeConfig
+        const product = storeConfig.products?.find(p => p.id === productId);
+        if (!product) {
+          throw new Error('Product not found');
         }
-      } else {
-        // Use local storage for demo stores
-        // This will be handled by the StoreContext
+        // Use StoreContext addToCart (localStorage-based)
+        await localAddToCart(product, quantity, options?.variantId);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to add item';
+        setError(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
-    [storeConfig, syncCart]
+    [storeConfig, localAddToCart]
   );
 
   const updateItem = useCallback(
     async (itemId: string, quantity: number) => {
       if (!storeConfig) return;
 
-      if (shouldUseAPI(storeConfig.slug)) {
-        try {
-          setLoading(true);
-          await cartService.updateItem(itemId, quantity);
-          await syncCart();
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to update item';
-          setError(errorMessage);
-          throw err;
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Use local storage for demo stores
-        updateCartQuantity(itemId, quantity);
+      try {
+        setLoading(true);
+        setError(null);
+        // Use StoreContext updateCartQuantity (localStorage-based)
+        await updateCartQuantity(itemId, quantity);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to update item';
+        setError(errorMessage);
+        throw err;
+      } finally {
+        setLoading(false);
       }
     },
-    [storeConfig, syncCart, updateCartQuantity]
+    [storeConfig, updateCartQuantity]
   );
 
   const removeItem = useCallback(
     async (itemId: string) => {
       if (!storeConfig) return;
 
-      if (shouldUseAPI(storeConfig.slug)) {
-        try {
-          setLoading(true);
-          await cartService.removeItem(itemId);
-          await syncCart();
-        } catch (err) {
-          const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
-          setError(errorMessage);
-          throw err;
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        // Use local storage for demo stores
-        localRemoveFromCart(itemId);
-      }
-    },
-    [storeConfig, syncCart, localRemoveFromCart]
-  );
-
-  const clearCart = useCallback(async () => {
-    if (!storeConfig) return;
-
-    if (shouldUseAPI(storeConfig.slug)) {
       try {
         setLoading(true);
-        await cartService.clearCart();
-        await syncCart();
+        setError(null);
+        // Use StoreContext removeFromCart (localStorage-based)
+        await localRemoveFromCart(itemId);
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to clear cart';
+        const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
         setError(errorMessage);
         throw err;
       } finally {
         setLoading(false);
       }
-    }
-  }, [storeConfig, syncCart]);
+    },
+    [storeConfig, localRemoveFromCart]
+  );
 
-  useEffect(() => {
-    if (storeConfig && shouldUseAPI(storeConfig.slug)) {
-      syncCart();
+  const clearCart = useCallback(async () => {
+    if (!storeConfig) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+      // Remove all items from cart
+      const itemsToRemove = [...localCart];
+      for (const item of itemsToRemove) {
+        await localRemoveFromCart(item.id);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to clear cart';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
-  }, [storeConfig, syncCart]);
+  }, [storeConfig, localCart, localRemoveFromCart]);
 
   return {
     cart: apiCart,

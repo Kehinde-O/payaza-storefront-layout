@@ -2,9 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { PromoBannerSection } from '@/lib/store-types';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { PromoBannerSection } from '../../../lib/store-types';
+import { Button } from '../../../components/ui/button';
+import { cn } from '../../../lib/utils';
 
 interface PromoBannerProps {
   config: PromoBannerSection | null | undefined;
@@ -65,7 +65,7 @@ export function PromoBanner({ config, layoutStyle = 'default', className }: Prom
   );
 
   return (
-    <section className="py-8 md:py-12 px-4 sm:px-6 lg:px-8">
+    <section data-section="marketing" className="py-8 md:py-12 px-4 sm:px-6 lg:px-8">
       {content}
     </section>
   );

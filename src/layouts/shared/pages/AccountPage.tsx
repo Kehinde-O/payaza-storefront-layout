@@ -12,15 +12,43 @@ import { useState, useEffect } from 'react';
 import { StoreConfig } from '@/lib/store-types';
 import { useAuth, User } from '@/lib/auth-context';
 import { cn, formatCurrency } from '@/lib/utils';
-import { orderService, Order } from '@/lib/services/order.service';
+// Note: orderService and wishlistService removed - these pages are shared and not editable in the editor
+// Using StoreContext for wishlist functionality instead
 import { bookingService, Booking } from '@/lib/services/booking.service';
-import { wishlistService, WishlistItem } from '@/lib/services/wishlist.service';
 import { customerService, CustomerProfile } from '@/lib/services/customer.service';
+import { useStore } from '@/lib/store-context';
+
+// Types for orders and wishlist (no longer from services)
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  items: any[];
+}
+
+interface WishlistItem {
+  id: string;
+  productId: string;
+  product: any;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  items: any[];
+  paymentStatus?: string;
+  currency?: string;
+}
 import { useToast } from '@/components/ui/toast';
 import { useLoading } from '@/lib/loading-context';
-import { MentorshipProgress } from '../../../components/learning/MentorshipProgress';
-import { CertificateCard } from '../../../components/learning/CertificateTemplates';
-import { CertificateViewer } from '../../../components/learning/CertificateViewer';
+import { MentorshipProgress } from '@/components/learning/MentorshipProgress';
+import { CertificateCard } from '@/components/learning/CertificateTemplates';
+import { CertificateViewer } from '@/components/learning/CertificateViewer';
 
 interface AccountPageProps {
   storeConfig?: StoreConfig;
@@ -28,6 +56,7 @@ interface AccountPageProps {
 
 export function AccountPage({ storeConfig }: AccountPageProps) {
   const { user, isAuthenticated, isLoading, logout, updateUserState } = useAuth();
+  const { wishlist, toggleWishlist } = useStore();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { addToast } = useToast();
@@ -128,14 +157,9 @@ export function AccountPage({ storeConfig }: AccountPageProps) {
         setIsLoadingData(true);
         startBackendLoading();
         try {
-          // Fetch orders
-          try {
-            const ordersData = await orderService.getOrders();
-            setOrders(ordersData);
-          } catch (error) {
-            console.error('Failed to fetch orders:', error);
-            setOrders([]);
-          }
+          // Note: orderService removed - orders not available in editor preview
+          // In production, orders would be fetched from the backend API
+          setOrders([]);
 
           // Fetch bookings
           try {
@@ -146,12 +170,17 @@ export function AccountPage({ storeConfig }: AccountPageProps) {
             setBookings([]);
           }
 
-          // Fetch wishlist
-          try {
-            const wishlistData = await wishlistService.getWishlist();
-            setWishlistItems(wishlistData);
-          } catch (error) {
-            console.error('Failed to fetch wishlist:', error);
+          // Use wishlist from StoreContext (localStorage-based)
+          // Note: wishlistService removed - using StoreContext instead
+          if (wishlist && storeConfig?.products) {
+            const items = wishlist
+              .map(productId => {
+                const product = storeConfig.products?.find(p => p.id === productId);
+                return product ? { id: productId, productId, product } : null;
+              })
+              .filter((item): item is WishlistItem => item !== null);
+            setWishlistItems(items);
+          } else {
             setWishlistItems([]);
           }
         } catch (error) {
@@ -1108,11 +1137,19 @@ export function AccountPage({ storeConfig }: AccountPageProps) {
                               className="absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur rounded-full text-red-500 hover:bg-red-50 transition-colors"
                               onClick={async () => {
                                 try {
-                                  await wishlistService.removeFromWishlist(item.id);
+                                  // Use StoreContext toggleWishlist (localStorage-based)
+                                  await toggleWishlist(item.productId);
                                   addToast('Removed from wishlist', 'success');
-                                  // Refresh wishlist
-                                  const updatedWishlist = await wishlistService.getWishlist();
-                                  setWishlistItems(updatedWishlist);
+                                  // Refresh wishlist from StoreContext
+                                  if (wishlist && storeConfig?.products) {
+                                    const items = wishlist
+                                      .map(productId => {
+                                        const product = storeConfig.products?.find(p => p.id === productId);
+                                        return product ? { id: productId, productId, product } : null;
+                                      })
+                                      .filter((item): item is WishlistItem => item !== null);
+                                    setWishlistItems(items);
+                                  }
                                 } catch (error: unknown) {
                                   const errorMessage = error instanceof Error ? error.message : 'Failed to remove from wishlist';
                                   addToast(errorMessage, 'error');

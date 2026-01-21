@@ -173,6 +173,12 @@ export interface StorySection {
   description?: string;
   image?: string;
   signature?: string;
+  quote?: string; // Testimonial quote
+  author?: string; // Testimonial author
+  badge?: string; // Badge text
+  section_title?: string; // Section title (alternative to title)
+  chef_name?: string; // Chef name (for food layouts)
+  chef_bio?: string; // Chef bio (for food layouts)
 }
 
 export interface PromoBannerSection {
@@ -180,8 +186,15 @@ export interface PromoBannerSection {
   image?: string;
   title?: string;
   subtitle?: string;
+  button?: {
+    text: string;
+    link: string;
+  };
+  // Deprecated: keeping for compatibility during transition
   buttonText?: string;
   buttonLink?: string;
+  badge?: string;
+  description?: string;
 }
 
 export interface TestimonialsSection {
@@ -272,6 +285,16 @@ export interface StoreConfig {
   layoutConfig?: StoreLayoutConfig;
   // Puck editor data - contains page-specific layout data (e.g., { home: Data, about: Data })
   puckData?: Record<string, any>;
+  isPreview?: boolean; // Flag to indicate if the store is in preview mode
+  headerConfig?: {
+    show?: boolean; // Whether to show header in preview mode (default: false in preview, true otherwise)
+    loginButtonText?: string; // Custom text for login button (default: "Log In")
+    signUpButtonText?: string; // Custom text for sign up button
+    accountButtonText?: string; // Custom text for account button
+    cartButtonText?: string; // Custom text for cart button
+    wishlistButtonText?: string; // Custom text for wishlist button
+    searchPlaceholder?: string; // Custom placeholder for search input
+  };
 }
 
 // Hero slider interface for new structure
@@ -293,21 +316,41 @@ export interface HeroSlider {
   order: number;                 // Display order
 }
 
+export interface BenefitItem {
+  title: string;
+  description: string;
+  icon?: string;
+  order: number;
+}
+
 export interface StoreLayoutConfig {
+  isPreview?: boolean; // Flag to indicate if the store is in preview mode
   hero?: {
     show: boolean;
     showCTA?: boolean;
     showSecondaryCTA?: boolean;
     autoPlay?: boolean;
     showBadges?: boolean;
-    // New slider array structure
     sliders?: HeroSlider[];
+    // Added for flexible text overrides directly on hero config
+    badge?: string;
+    title?: string;
+    subtitle?: string;
+    description?: string;
+    primaryCTA?: string;
+    secondaryCTA?: string;
   };
   features?: {
     show: boolean; // Benefits strip, tech features, etc.
     showIcons?: boolean;
+    title?: string;
+    description?: string;
+    items?: BenefitItem[];
   };
   sections?: {
+    // Catch-all for other sections
+    [key: string]: any;
+
     hero?: {
       show?: boolean;
       autoPlay?: boolean;
@@ -315,6 +358,14 @@ export interface StoreLayoutConfig {
       showSecondaryCTA?: boolean;
       showBadges?: boolean;
       sliders?: HeroSlider[];
+      // Added for flexible text overrides
+      badge?: string;
+      title?: string;
+      titleHighlight?: string; // Legacy prop
+      subtitle?: string;
+      description?: string;
+      primaryCTA?: string;
+      secondaryCTA?: string;
     };
     categories?: {
       show: boolean;
@@ -323,6 +374,7 @@ export interface StoreLayoutConfig {
       title?: string; // Section title (e.g., "Shop by Category")
       subtitle?: string; // Section subtitle
       viewAll?: string; // "View All Categories" text
+      viewAllLabel?: string; // "View All" label text
     };
     featuredProducts?: {
       show: boolean; // "Trending Now", "Chef's Recommendations", etc.
@@ -330,15 +382,32 @@ export interface StoreLayoutConfig {
       subtitle?: string; // Section subtitle
       showViewAll?: boolean;
       viewAll?: string; // "View All Products" text
+      viewAllLabel?: string; // "View All" label text
       showAddToCart?: boolean;
       showWishlist?: boolean;
       showRatings?: boolean;
       emptyState?: string; // Empty state message
+      eyebrow?: string; // Eyebrow text above title
     };
     marketing?: {
       show: boolean; // Lookbook, Promo Banner, Newsletter
       showNewsletter?: boolean;
       showPromoBanner?: boolean;
+      newsletterTitle?: string;
+      newsletterSubtitle?: string;
+      newsletterButton?: string;
+      newsletterPlaceholder?: string;
+      newsletterBadge?: string;
+      subscriptionTitle?: string;
+      subscriptionSubtitle?: string;
+      subscriptionButton?: string;
+      subscriptionBadge?: string;
+      subscriptionDescription?: string;
+      backgroundImage?: string;
+      badge?: string;
+      title?: string;
+      subtitle?: string;
+      promoDiscount?: string;
       editorial?: {
         show?: boolean;
         label?: string; // e.g., "EDITORIAL"
@@ -350,6 +419,9 @@ export interface StoreLayoutConfig {
         primaryButtonLink?: string; // e.g., "/style-guide"
         secondaryButtonText?: string; // e.g., "Read Our Story"
         secondaryButtonLink?: string; // e.g., "/about"
+        badgeText?: string; // Badge text (e.g., "Lookbook")
+        primaryButton?: { text: string; link: string }; // Button object (alternative to Text/Link)
+        secondaryButton?: { text: string; link: string }; // Button object (alternative to Text/Link)
       };
       promoBanner?: {
         show?: boolean;
@@ -366,7 +438,11 @@ export interface StoreLayoutConfig {
         button?: string; // Subscribe button text
         placeholder?: string; // Email input placeholder
         disclaimer?: string; // Privacy disclaimer text
+        badge?: string;
       };
+      ctaTitle?: string; // CTA section title
+      ctaDescription?: string; // CTA section description
+      ctaButton?: string; // CTA button text
       shopTheLook?: {
         show?: boolean;
         image?: string; // Shop the look image
@@ -417,8 +493,12 @@ export interface StoreLayoutConfig {
       show: boolean; // Featured team members on home page
       title?: string; // Section title
       description?: string; // Section description
+      subtitle?: string; // Section subtitle
       showViewAll?: boolean;
       viewAll?: string; // "View All Team" text
+      viewAllLabel?: string; // "View All" label text
+      memberName?: string; // Featured member name
+      memberRole?: string; // Featured member role
     };
     services?: {
       show: boolean; // Services section (for booking layouts)
@@ -427,10 +507,58 @@ export interface StoreLayoutConfig {
       showViewAll?: boolean;
       viewAll?: string; // "View All Services" text
       limit?: number; // How many to show
+      viewAllLabel?: string;
     };
     map?: {
       show: boolean;
       title?: string; // Section title
+    };
+
+    // Newly added sections from recent layouts
+    about?: {
+      show: boolean;
+      title?: string;
+      description?: string;
+      image?: string;
+      // Legacy/Fallback properties for clothing layout compatibility
+      detailImage?: string;
+      label?: string;
+      primaryButtonText?: string;
+      primaryButtonLink?: string;
+      secondaryButtonText?: string;
+      secondaryButtonLink?: string;
+      // Added for food and other layouts
+      quote?: string;
+      author?: string;
+      badge?: string;
+      section_title?: string;
+      chef_name?: string;
+      chef_bio?: string;
+      // Added for stats and buttons
+      showStats?: boolean;
+      stat1Label?: string;
+      stat1Value?: string;
+      stat2Label?: string;
+      stat2Value?: string;
+      buttonText?: string;
+      buttonLink?: string;
+    };
+    trust?: {
+      show: boolean;
+      title?: string;
+    };
+    faq?: {
+      show: boolean;
+      title?: string;
+      items?: any[];
+    };
+    subscription?: {
+      show: boolean;
+      title?: string;
+      subtitle?: string;
+      description?: string;
+      buttonText?: string;
+      badge?: string;
     };
   };
   pages?: {
@@ -440,6 +568,15 @@ export interface StoreLayoutConfig {
       content?: string; // Markdown supported
       missionStatement?: string;
       gallerySection?: Array<{ image: string; caption?: string }>;
+      hero?: any;
+      story?: any;
+      stats?: any;
+      'contact-info'?: any;
+      values?: any;
+      aboutHeader?: any;
+      aboutContent?: any;
+      statsSection?: any;
+      contactSection?: any;
     };
     team?: {
       title?: string;
@@ -477,6 +614,46 @@ export interface StoreLayoutConfig {
         question: string;
         answer: string;
       }>;
+    };
+    products?: {
+      productsHeader?: any;
+      productsGrid?: any;
+    };
+    categories?: {
+      categoriesHeader?: any;
+      categoryGrid?: any;
+    };
+    categoryDetail?: {
+      categoryDetail?: any;
+      showServices?: boolean;
+      showProducts?: boolean;
+      showBanner?: boolean;
+      showDescription?: boolean;
+      showFilters?: boolean;
+    };
+    productDetail?: {
+      productDetail?: any;
+      showSizeGuide?: boolean;
+      showAddToCart?: boolean;
+      showWishlist?: boolean;
+      showReviews?: boolean;
+      showRelatedProducts?: boolean;
+    };
+    contact?: {
+      contact?: any;
+      contactHeader?: any;
+      contactForm?: any;
+      hero?: any;
+      form?: any;
+      backgroundImage?: string;
+      title?: string;
+      subtitle?: string;
+      infoTitle?: string;
+      infoDescription?: string;
+    };
+    menu?: {
+      menuHeader?: any;
+      menuGrid?: any;
     };
   };
   // Comprehensive text configuration

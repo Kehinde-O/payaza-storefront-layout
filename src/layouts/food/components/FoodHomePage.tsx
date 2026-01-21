@@ -9,8 +9,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { formatCurrency } from '@/lib/utils';
-import { getLayoutText, getBannerImage, getTextContent, getTeamMemberImage } from '../../../lib/utils/asset-helpers';
-import { shouldUseAPI } from '../../../lib/utils/demo-detection';
+import { getLayoutText, getBannerImage, getTextContent, getTeamMemberImage, normalizeStoreImageUrl } from '@/lib/utils/asset-helpers';
+import { shouldUseAPI } from '@/lib/utils/demo-detection';
 import { TestimonialCard } from '../../shared/components/TestimonialCard';
 import { PromoBanner } from '../../shared/components/PromoBanner';
 
@@ -18,10 +18,51 @@ interface FoodHomePageProps {
   storeConfig: StoreConfig;
 }
 
-export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
-  const categories = storeConfig.categories || [];
-  const menuItems = storeConfig.menuItems || [];
-  const { addToCart } = useStore();
+export function FoodHomePage({ storeConfig: initialConfig }: FoodHomePageProps) {
+  const { store, addToCart } = useStore();
+  const storeConfig = store || initialConfig;
+
+  // In preview mode, use mock items if none are available
+  const isPreview = (typeof window !== 'undefined' && (window as any).__IS_PREVIEW__) || storeConfig.layoutConfig?.isPreview;
+
+  const categories = (storeConfig.categories && storeConfig.categories.length > 0)
+    ? storeConfig.categories
+    : (isPreview ? [
+      { id: 'cat1', name: 'Appetizers', slug: 'appetizers' },
+      { id: 'cat2', name: 'Main Courses', slug: 'main-courses' },
+      { id: 'cat3', name: 'Desserts', slug: 'desserts' },
+      { id: 'cat4', name: 'Beverages', slug: 'beverages' }
+    ] : []);
+
+  const menuItems = (storeConfig.menuItems && storeConfig.menuItems.length > 0)
+    ? storeConfig.menuItems
+    : (isPreview ? [
+      {
+        id: 'item1',
+        name: 'Classic Burger',
+        description: 'Juicy beef patty with fresh lettuce, tomato, and special sauce',
+        price: 12.99,
+        categoryId: 'cat2',
+        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=600&fit=crop&q=80',
+      },
+      {
+        id: 'item2',
+        name: 'Caesar Salad',
+        description: 'Fresh romaine lettuce with parmesan, croutons, and caesar dressing',
+        price: 9.99,
+        categoryId: 'cat1',
+        image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=800&h=600&fit=crop&q=80',
+      },
+      {
+        id: 'item3',
+        name: 'Grilled Salmon',
+        description: 'Fresh Atlantic salmon with lemon butter sauce and seasonal vegetables',
+        price: 18.99,
+        categoryId: 'cat2',
+        image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&h=600&fit=crop&q=80',
+      },
+    ] : []);
+
   const { addToast } = useToast();
   const [newsletterEmail, setNewsletterEmail] = useState('');
 
@@ -54,38 +95,44 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
   const isRealStore = shouldUseAPI(storeConfig.slug);
 
   // Debug logging for slider configuration
-  console.log('[FoodHomePage] LayoutConfig sections.hero:', layoutConfig?.sections?.hero);
-  console.log('[FoodHomePage] LayoutConfig hero (top-level):', layoutConfig?.hero);
-  console.log('[FoodHomePage] Sliders found:', layoutConfig?.sections?.hero?.sliders?.length || 0);
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[FoodHomePage] LayoutConfig sections.hero:', layoutConfig?.sections?.hero);
+    console.log('[FoodHomePage] LayoutConfig hero (top-level):', layoutConfig?.hero);
+    console.log('[FoodHomePage] Sliders found:', layoutConfig?.sections?.hero?.sliders?.length || 0);
+  }
 
   // Try new structure first (sections.hero.sliders)
-  let heroSlides: any[] = [];
+  let heroSlides: any[] = [{ image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2000&auto=format&fit=crop', badge: '#1 Food Delivery in Town', title: 'Taste the', highlight: 'Extraordinary', description: 'Experience culinary excellence delivered straight to your doorstep.', primaryBtn: 'Order Now', primaryBtnLink: '/menu', secondaryBtn: 'View Menu', secondaryBtnLink: '/menu' }];
   if (layoutConfig?.sections?.hero?.sliders && Array.isArray(layoutConfig.sections.hero.sliders) && layoutConfig.sections.hero.sliders.length > 0) {
-    console.log('[FoodHomePage] Using sections.hero.sliders structure');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[FoodHomePage] Using sections.hero.sliders structure');
+    }
     heroSlides = layoutConfig.sections.hero.sliders
-      .filter((slider) => slider && slider.image) // Filter out invalid sliders
+      .filter((slider) => slider) // Relaxed filter: allow slides without explicit images
       .map((slider) => {
         // Extract button text - only use if not empty
         const primaryButtonText = slider.primaryButton?.text?.trim() || '';
         const secondaryButtonText = slider.secondaryButton?.text?.trim() || '';
 
-        console.log('[FoodHomePage] Slider:', {
-          id: slider.id,
-          image: slider.image ? 'present' : 'missing',
-          title: slider.title,
-          primaryButtonText,
-          secondaryButtonText,
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[FoodHomePage] Slider:', {
+            id: slider.id,
+            image: slider.image ? 'present' : 'missing (using fallback)',
+            title: slider.title,
+            primaryButtonText,
+            secondaryButtonText,
+          });
+        }
 
         // Check badge visibility - use sections.hero.showBadges first, fallback to top-level hero.showBadges
         const showBadges = layoutConfig?.sections?.hero?.showBadges !== false &&
           (layoutConfig?.hero?.showBadges !== false || layoutConfig?.sections?.hero?.showBadges === undefined);
 
         return {
-          image: slider.image || '',
+          image: normalizeStoreImageUrl(slider.image) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2000&auto=format&fit=crop",
           badge: (showBadges && slider.badge && slider.badge.trim() !== '') ? slider.badge : "#1 Food Delivery in Town",
-          title: slider.title || "Taste the",
-          highlight: slider.highlight || "Extraordinary", // Food layout specific
+          title: slider.title || "Taste the Extraordinary",
+          highlight: slider.highlight || "", // Food layout specific
           description: slider.description || `${storeConfig.description} Experience culinary excellence delivered straight to your doorstep.`,
           // Only set button text if it's not empty - this allows button visibility logic to work
           primaryBtn: primaryButtonText || getLayoutText(storeConfig, 'common.orderNow', "Order Now"),
@@ -96,9 +143,11 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
       });
   } else if (layoutConfig?.hero?.sliders && Array.isArray(layoutConfig.hero.sliders) && layoutConfig.hero.sliders.length > 0) {
     // Fallback to top-level hero.sliders
-    console.log('[FoodHomePage] Using top-level hero.sliders structure');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[FoodHomePage] Using top-level hero.sliders structure');
+    }
     heroSlides = layoutConfig.hero.sliders
-      .filter((slider) => slider && slider.image) // Filter out invalid sliders
+      .filter((slider) => slider) // Relaxed filter
       .map((slider) => {
         const primaryButtonText = slider.primaryButton?.text?.trim() || '';
         const secondaryButtonText = slider.secondaryButton?.text?.trim() || '';
@@ -108,10 +157,10 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
           (layoutConfig?.hero?.showBadges !== false || layoutConfig?.sections?.hero?.showBadges === undefined);
 
         return {
-          image: slider.image || '',
+          image: normalizeStoreImageUrl(slider.image) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2000&auto=format&fit=crop",
           badge: (showBadges && slider.badge && slider.badge.trim() !== '') ? slider.badge : "#1 Food Delivery in Town",
-          title: slider.title || "Taste the",
-          highlight: slider.highlight || "Extraordinary", // Food layout specific
+          title: slider.title || "Taste the Extraordinary",
+          highlight: slider.highlight || "", // Food layout specific
           description: slider.description || `${storeConfig.description} Experience culinary excellence delivered straight to your doorstep.`,
           primaryBtn: primaryButtonText || getLayoutText(storeConfig, 'common.orderNow', "Order Now"),
           primaryBtnLink: slider.primaryButton?.link || `/${storeConfig.slug}/menu`,
@@ -123,7 +172,7 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
     // Fallback to old format (backward compatibility)
     heroSlides = [
       {
-        image: getBannerImage(storeConfig, 'hero_slide_1', "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop"),
+        image: getBannerImage(storeConfig, 'hero_slide_1', "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=2000&auto=format&fit=crop"),
         badge: isRealStore && layoutConfig?.text?.hero?.slides?.[0]?.badge ? layoutConfig.text.hero.slides[0].badge : getTextContent(storeConfig, 'hero_slide_1:badge', "#1 Food Delivery in Town"),
         title: isRealStore && layoutConfig?.text?.hero?.slides?.[0]?.title ? layoutConfig.text.hero.slides[0].title : getTextContent(storeConfig, 'hero_slide_1:title', "Taste the"),
         highlight: getTextContent(storeConfig, 'hero_slide_1:highlight', "Extraordinary"),
@@ -132,7 +181,7 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
         secondaryBtn: isRealStore && layoutConfig?.text?.hero?.slides?.[0]?.secondaryButton ? layoutConfig.text.hero.slides[0].secondaryButton : getLayoutText(storeConfig, 'common.viewMenu', "View Menu")
       },
       {
-        image: getBannerImage(storeConfig, 'hero_slide_2', "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop"),
+        image: getBannerImage(storeConfig, 'hero_slide_2', "https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2000&auto=format&fit=crop"),
         badge: isRealStore && layoutConfig?.text?.hero?.slides?.[1]?.badge ? layoutConfig.text.hero.slides[1].badge : getTextContent(storeConfig, 'hero_slide_2:badge', "Fresh & Authentic"),
         title: isRealStore && layoutConfig?.text?.hero?.slides?.[1]?.title ? layoutConfig.text.hero.slides[1].title : getTextContent(storeConfig, 'hero_slide_2:title', "Ingredients of"),
         highlight: getTextContent(storeConfig, 'hero_slide_2:highlight', "Quality"),
@@ -141,7 +190,7 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
         secondaryBtn: isRealStore && layoutConfig?.text?.hero?.slides?.[1]?.secondaryButton ? layoutConfig.text.hero.slides[1].secondaryButton : getLayoutText(storeConfig, 'common.ourStory', "Our Story")
       },
       {
-        image: getBannerImage(storeConfig, 'hero_slide_3', "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=2070&auto=format&fit=crop"),
+        image: getBannerImage(storeConfig, 'hero_slide_3', "https://images.unsplash.com/photo-1559339352-11d035aa65de?q=80&w=1974&auto=format&fit=crop"),
         badge: isRealStore && layoutConfig?.text?.hero?.slides?.[2]?.badge ? layoutConfig.text.hero.slides[2].badge : getTextContent(storeConfig, 'hero_slide_3:badge', "Chef's Special"),
         title: isRealStore && layoutConfig?.text?.hero?.slides?.[2]?.title ? layoutConfig.text.hero.slides[2].title : getTextContent(storeConfig, 'hero_slide_3:title', "Crafted with"),
         highlight: getTextContent(storeConfig, 'hero_slide_3:highlight', "Passion"),
@@ -248,6 +297,31 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
   maxDate.setDate(maxDate.getDate() + 90);
   const maxDateString = maxDate.toISOString().split('T')[0];
 
+  const [resetReservation, setResetReservation] = useState(false);
+
+  // Handle reservation reset timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resetReservation) {
+      timer = setTimeout(() => {
+        setSubmitSuccess(false);
+        setReservationData({
+          date: '',
+          time: '',
+          guests: '2',
+          name: '',
+          email: '',
+          phone: '',
+          specialRequests: '',
+        });
+        setResetReservation(false);
+      }, 3000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [resetReservation]);
+
   const handleReservationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -257,20 +331,7 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
 
     setIsSubmitting(false);
     setSubmitSuccess(true);
-
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSubmitSuccess(false);
-      setReservationData({
-        date: '',
-        time: '',
-        guests: '2',
-        name: '',
-        email: '',
-        phone: '',
-        specialRequests: '',
-      });
-    }, 3000);
+    setResetReservation(true);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -280,8 +341,9 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
   return (
     <div className="min-h-screen bg-[#FAFAFA]">
       {/* Hero Section - Slider */}
-      {heroSlides.length > 0 && (
+      {(layoutConfig?.sections?.hero?.show !== false || layoutConfig?.hero?.show !== false) && heroSlides.length > 0 && (
         <section
+          data-section="hero"
           className="relative h-[90vh] w-full overflow-hidden bg-black"
           onMouseEnter={() => setIsAutoPlaying(false)}
           onMouseLeave={() => setIsAutoPlaying(true)}
@@ -398,8 +460,8 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
                   setIsAutoPlaying(false);
                 }}
                 className={`transition-all duration-500 rounded-full ${index === currentSlide
-                    ? 'w-12 h-3 bg-orange-500 shadow-lg shadow-orange-500/50'
-                    : 'w-3 h-3 bg-white/30 hover:bg-white/50'
+                  ? 'w-12 h-3 bg-orange-500 shadow-lg shadow-orange-500/50'
+                  : 'w-3 h-3 bg-white/30 hover:bg-white/50'
                   }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -409,174 +471,193 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
       )}
 
       {/* Categories - Visual Navigation */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 -mt-20 md:-mt-32 relative z-10">
-        <div className="container mx-auto max-w-7xl">
-          <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-black/5 p-8 md:p-14 border border-white/20">
-            <div className="text-center mb-8 md:mb-12">
-              <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">Menu Categories</span>
-              <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">What are you craving?</h2>
+      {layoutConfig?.sections?.categories?.show !== false && (
+        <section
+          data-section="categories"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 -mt-20 md:-mt-32 relative z-10"
+        >
+          <div className="container mx-auto max-w-7xl">
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-black/5 p-8 md:p-14 border border-white/20">
+              <div className="text-center mb-8 md:mb-12">
+                <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">
+                  {layoutConfig?.sections?.categories?.title || "Menu Categories"}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+                  {layoutConfig?.sections?.categories?.subtitle || "What are you craving?"}
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/${storeConfig.slug}/menu/${category.slug}`}
+                    className="group flex flex-col items-center gap-5 min-w-[120px]"
+                  >
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] group-hover:shadow-[0_20px_40px_rgba(249,115,22,0.2)] flex items-center justify-center transition-all duration-500 group-hover:-translate-y-2 border-4 border-white overflow-hidden relative">
+                      <div className="absolute inset-0 bg-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      {/* In a real app, use category icons/images here */}
+                      <Utensils className="h-10 w-10 md:h-12 md:w-12 text-gray-400 group-hover:text-orange-500 transition-colors relative z-10" />
+                    </div>
+                    <span className="font-bold text-gray-600 group-hover:text-orange-600 transition-colors text-base md:text-lg tracking-tight">
+                      {category.name}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* How it Works - Visual Process */}
+      {layoutConfig?.sections?.process?.show !== false && (
+        <section
+          data-section="about"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#FAFAFA]"
+        >
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center mb-12 md:mb-20">
+              <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">
+                {layoutConfig?.sections?.process?.subtitle || "Simple Process"}
+              </span>
+              <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+                {layoutConfig?.sections?.process?.title || "How It Works"}
+              </h2>
             </div>
 
-            <div className="flex flex-wrap justify-center gap-8 md:gap-12">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/${storeConfig.slug}/menu/${category.slug}`}
-                  className="group flex flex-col items-center gap-5 min-w-[120px]"
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative max-w-5xl mx-auto">
+              {/* Connecting Line (Desktop) */}
+              <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-gray-200 via-orange-200 to-gray-200 -z-10 border-t-2 border-dashed border-gray-300/50" />
+
+              {(() => {
+                const defaultSteps = [
+                  { title: "Choose Your Dish", description: "Browse our diverse menu and select your favorite meals with just a few taps.", icon: "Smartphone" },
+                  { title: "We Cook It Fresh", description: "Our expert chefs prepare your order using the finest, freshest ingredients.", icon: "ChefHat" },
+                  { title: "Fast Delivery", description: "Receive your hot and delicious meal at your doorstep in record time.", icon: "Truck" }
+                ];
+                const steps = layoutConfig?.sections?.process?.steps || defaultSteps;
+                const iconMap: Record<string, any> = { Smartphone, ChefHat, Truck };
+
+                return steps.map((step: any, idx: number) => {
+                  const IconComponent = iconMap[step.icon] || Utensils;
+                  return (
+                    <div key={idx} className="flex flex-col items-center text-center group">
+                      <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] group-hover:shadow-[0_20px_50px_rgba(249,115,22,0.15)] group-hover:-translate-y-2 transition-all duration-500 relative z-10 border border-gray-100">
+                        <div className="p-4 bg-orange-50 rounded-2xl group-hover:bg-orange-100 transition-colors duration-500">
+                          <IconComponent className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-500" />
+                        </div>
+                        <div className="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">{idx + 1}</div>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-4">{step.title}</h3>
+                      <p className="text-gray-500 leading-relaxed max-w-xs font-medium">
+                        {step.description}
+                      </p>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Featured Menu Items - Grid */}
+      {layoutConfig?.sections?.featuredProducts?.show !== false && (
+        <section
+          data-section="featuredProducts"
+          className="py-16 md:py-20 px-4 sm:px-6 lg:px-8"
+        >
+          <div className="container mx-auto max-w-7xl">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-8 md:mb-12 gap-4">
+              <div>
+                <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">
+                  {layoutConfig?.sections?.featuredProducts?.subtitle || "Our Menu"}
+                </span>
+                <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">
+                  {layoutConfig?.sections?.featuredProducts?.title || getLayoutText(storeConfig, 'food.chefRecommendations', 'Chef\'s Recommendations')}
+                </h2>
+              </div>
+              <Link href={`/${storeConfig.slug}/menu`} className="group flex items-center gap-2 text-gray-600 hover:text-orange-600 font-bold transition-colors">
+                {(layoutConfig?.sections?.featuredProducts as any)?.viewAllLabel || getLayoutText(storeConfig, 'food.viewMenu', 'View Full Menu')} <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {menuItems.slice(0, 3).map((item) => (
+                <div
+                  key={item.id}
+                  className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500 overflow-hidden flex flex-col h-full hover:-translate-y-2"
                 >
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-white shadow-[0_10px_40px_rgba(0,0,0,0.08)] group-hover:shadow-[0_20px_40px_rgba(249,115,22,0.2)] flex items-center justify-center transition-all duration-500 group-hover:-translate-y-2 border-4 border-white overflow-hidden relative">
-                    <div className="absolute inset-0 bg-orange-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    {/* In a real app, use category icons/images here */}
-                    <Utensils className="h-10 w-10 md:h-12 md:w-12 text-gray-400 group-hover:text-orange-500 transition-colors relative z-10" />
+                  <div className="relative aspect-[4/3] overflow-hidden m-3 rounded-[1.5rem]">
+                    {item.image ? (
+                      <div className="w-full h-full relative">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          unoptimized
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <Utensils className="h-12 w-12 text-gray-300" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full font-black text-gray-900 shadow-lg border border-white/50">
+                      {formatCurrency(item.price, storeConfig.settings?.currency || 'USD')}
+                    </div>
+
+                    {/* Quick Add Button Overlay - Desktop */}
+                    <div className="hidden lg:block absolute bottom-4 left-4 right-4 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
+                      <Button onClick={() => handleAddToCart(item)} className="w-full h-12 rounded-xl bg-white hover:bg-orange-600 text-gray-900 hover:text-white font-bold shadow-xl border-0 transition-colors">
+                        Add to Order
+                      </Button>
+                    </div>
+
+                    {/* Mobile Add Button */}
+                    <button onClick={() => handleAddToCart(item)} className="lg:hidden absolute bottom-3 right-3 bg-white text-orange-600 w-10 h-10 rounded-full shadow-lg flex items-center justify-center font-bold z-10 active:scale-95 transition-transform">
+                      <Plus className="h-5 w-5" />
+                    </button>
                   </div>
-                  <span className="font-bold text-gray-600 group-hover:text-orange-600 transition-colors text-base md:text-lg tracking-tight">
-                    {category.name}
-                  </span>
-                </Link>
+
+                  <div className="p-6 pt-2 flex flex-col flex-1">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-xl text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
+                        {item.name}
+                      </h3>
+                    </div>
+
+                    <p className="text-gray-500 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed font-medium">
+                      {item.description}
+                    </p>
+
+                    {item.dietaryInfo && item.dietaryInfo.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-50">
+                        {item.dietaryInfo.map((info) => (
+                          <span key={info} className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg group-hover:bg-orange-50 group-hover:text-orange-700 transition-colors">
+                            {info}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* How it Works - Visual Process */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-[#FAFAFA]">
-        <div className="container mx-auto max-w-7xl">
-          <div className="text-center mb-12 md:mb-20">
-            <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">Simple Process</span>
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">How It Works</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative max-w-5xl mx-auto">
-            {/* Connecting Line (Desktop) */}
-            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 bg-gradient-to-r from-gray-200 via-orange-200 to-gray-200 -z-10 border-t-2 border-dashed border-gray-300/50" />
-
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] group-hover:shadow-[0_20px_50px_rgba(249,115,22,0.15)] group-hover:-translate-y-2 transition-all duration-500 relative z-10 border border-gray-100">
-                <div className="p-4 bg-orange-50 rounded-2xl group-hover:bg-orange-100 transition-colors duration-500">
-                  <Smartphone className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-500" />
-                </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">1</div>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Choose Your Dish</h3>
-              <p className="text-gray-500 leading-relaxed max-w-xs font-medium">
-                Browse our diverse menu and select your favorite meals with just a few taps.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] group-hover:shadow-[0_20px_50px_rgba(249,115,22,0.15)] group-hover:-translate-y-2 transition-all duration-500 relative z-10 border border-gray-100">
-                <div className="p-4 bg-orange-50 rounded-2xl group-hover:bg-orange-100 transition-colors duration-500">
-                  <ChefHat className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-500" />
-                </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">2</div>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">We Cook It Fresh</h3>
-              <p className="text-gray-500 leading-relaxed max-w-xs font-medium">
-                Our expert chefs prepare your order using the finest, freshest ingredients.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center group">
-              <div className="w-32 h-32 rounded-[2rem] bg-white flex items-center justify-center mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] group-hover:shadow-[0_20px_50px_rgba(249,115,22,0.15)] group-hover:-translate-y-2 transition-all duration-500 relative z-10 border border-gray-100">
-                <div className="p-4 bg-orange-50 rounded-2xl group-hover:bg-orange-100 transition-colors duration-500">
-                  <Truck className="h-10 w-10 text-orange-500 group-hover:scale-110 transition-transform duration-500" />
-                </div>
-                <div className="absolute -top-3 -right-3 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">3</div>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Fast Delivery</h3>
-              <p className="text-gray-500 leading-relaxed max-w-xs font-medium">
-                Receive your hot and delicious meal at your doorstep in record time.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Menu Items - Grid */}
-      <section className="py-16 md:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-7xl">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-8 md:mb-12 gap-4">
-            <div>
-              <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">Our Menu</span>
-              <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight">{getLayoutText(storeConfig, 'food.chefRecommendations', 'Chef\'s Recommendations')}</h2>
-            </div>
-            <Link href={`/${storeConfig.slug}/menu`} className="group flex items-center gap-2 text-gray-600 hover:text-orange-600 font-bold transition-colors">
-              {getLayoutText(storeConfig, 'food.viewMenu', 'View Full Menu')} <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {menuItems.slice(0, 3).map((item) => (
-              <div
-                key={item.id}
-                className="group bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all duration-500 overflow-hidden flex flex-col h-full hover:-translate-y-2"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden m-3 rounded-[1.5rem]">
-                  {item.image ? (
-                    <div className="w-full h-full relative">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                        unoptimized
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                      <Utensils className="h-12 w-12 text-gray-300" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full font-black text-gray-900 shadow-lg border border-white/50">
-                    {formatCurrency(item.price, storeConfig.settings?.currency || 'USD')}
-                  </div>
-
-                  {/* Quick Add Button Overlay - Desktop */}
-                  <div className="hidden lg:block absolute bottom-4 left-4 right-4 translate-y-20 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                    <Button onClick={() => handleAddToCart(item)} className="w-full h-12 rounded-xl bg-white hover:bg-orange-600 text-gray-900 hover:text-white font-bold shadow-xl border-0 transition-colors">
-                      Add to Order
-                    </Button>
-                  </div>
-
-                  {/* Mobile Add Button */}
-                  <button onClick={() => handleAddToCart(item)} className="lg:hidden absolute bottom-3 right-3 bg-white text-orange-600 w-10 h-10 rounded-full shadow-lg flex items-center justify-center font-bold z-10 active:scale-95 transition-transform">
-                    <Plus className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="p-6 pt-2 flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-xl text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-1">
-                      {item.name}
-                    </h3>
-                  </div>
-
-                  <p className="text-gray-500 text-sm mb-6 line-clamp-2 flex-1 leading-relaxed font-medium">
-                    {item.description}
-                  </p>
-
-                  {item.dietaryInfo && item.dietaryInfo.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-50">
-                      {item.dietaryInfo.map((info) => (
-                        <span key={info} className="text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg group-hover:bg-orange-50 group-hover:text-orange-700 transition-colors">
-                          {info}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Chef's Story / About Section - Conditionally rendered */}
-      {layoutConfig?.sections?.story?.show !== false && (
-        <section className="py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden">
+      {layoutConfig?.sections?.about?.show !== false && (
+        <section
+          data-section="about"
+          className="py-16 md:py-20 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-20 items-center">
               <div className="order-2 lg:order-1">
@@ -584,7 +665,7 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
                   <div className="absolute -top-10 -left-10 w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-50" />
                   <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700">
                     <Image
-                      src={layoutConfig?.sections?.story?.image || getBannerImage(storeConfig, 'chef_image', "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&w=2077&auto=format&fit=crop")}
+                      src={layoutConfig?.sections?.about?.image || getBannerImage(storeConfig, 'chef_image', "https://images.unsplash.com/photo-1583394293214-28ded15ee548?q=80&w=2000&auto=format&fit=crop")}
                       alt="Chef Cooking"
                       fill
                       className="object-cover"
@@ -607,30 +688,42 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
 
               <div className="order-1 lg:order-2 space-y-6">
                 <span className="text-orange-600 font-bold tracking-wider uppercase text-sm">
-                  {layoutConfig?.sections?.story?.label || getLayoutText(storeConfig, 'chef_image:section_title', 'Our Story')}
+                  {layoutConfig?.sections?.about?.section_title || getLayoutText(storeConfig, 'chef_image:section_title', 'Our Story')}
                 </span>
                 <h2 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight">
-                  {layoutConfig?.sections?.story?.title || getLayoutText(storeConfig, 'chef_image:chef_name', 'Crafted with Love, Served with Passion')}
+                  {layoutConfig?.sections?.about?.chef_name || getLayoutText(storeConfig, 'chef_image:chef_name', 'Crafted with Love, Served with Passion')}
                 </h2>
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  {layoutConfig?.sections?.story?.description || getLayoutText(storeConfig, 'chef_image:chef_bio', 'We believe that great food brings people together. Our chefs use only the freshest, locally-sourced ingredients to create dishes that not only taste amazing but also tell a story of tradition and innovation.')}
+                  {layoutConfig?.sections?.about?.chef_bio || getLayoutText(storeConfig, 'chef_image:chef_bio', 'We believe that great food brings people together. Our chefs use only the freshest, locally-sourced ingredients to create dishes that not only taste amazing but also tell a story of tradition and innovation.')}
                 </p>
 
                 <div className="grid grid-cols-2 gap-6 pt-4">
-                  <div className="space-y-2">
-                    <h4 className="text-3xl font-black text-gray-900">15k+</h4>
-                    <p className="text-gray-500 font-medium">Happy Customers</p>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="text-3xl font-black text-gray-900">100%</h4>
-                    <p className="text-gray-500 font-medium">Fresh Ingredients</p>
-                  </div>
+                  {(layoutConfig?.sections?.about?.showStats !== false) && (
+                    <>
+                      <div className="space-y-2">
+                        <h4 className="text-3xl font-black text-gray-900">
+                          {layoutConfig?.sections?.about?.stat1Value || "15k+"}
+                        </h4>
+                        <p className="text-gray-500 font-medium">
+                          {layoutConfig?.sections?.about?.stat1Label || "Happy Customers"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="text-3xl font-black text-gray-900">
+                          {layoutConfig?.sections?.about?.stat2Value || "100%"}
+                        </h4>
+                        <p className="text-gray-500 font-medium">
+                          {layoutConfig?.sections?.about?.stat2Label || "Fresh Ingredients"}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="pt-6">
-                  <Link href={`/${storeConfig.slug}/about`}>
+                  <Link href={layoutConfig?.sections?.about?.buttonLink || `/${storeConfig.slug}/about`}>
                     <Button variant="outline" className="rounded-full px-8 py-6 border-gray-200 hover:border-orange-600 hover:text-orange-600 text-base font-bold">
-                      Read More About Us
+                      {layoutConfig?.sections?.about?.buttonText || "Read More About Us"}
                     </Button>
                   </Link>
                 </div>
@@ -642,7 +735,10 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
 
       {/* Testimonials Section - Conditionally rendered */}
       {layoutConfig?.sections?.testimonials?.show !== false && (
-        <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-orange-50/30 to-white">
+        <section
+          data-section="testimonials"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-orange-50/30 to-white"
+        >
           <div className="container mx-auto max-w-7xl">
             <div className="text-center mb-12 md:mb-20">
               <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-3 block">Testimonials</span>
@@ -702,304 +798,307 @@ export function FoodHomePage({ storeConfig }: FoodHomePageProps) {
         </section>
       )}
 
-      {/* Promotional Banner */}
-      <PromoBanner config={layoutConfig?.sections?.promoBanner} layoutStyle="food" />
-
       {/* Reservation Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-white via-orange-50/20 to-white relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-30 -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-50 rounded-full blur-3xl opacity-20 -z-10" />
+      {layoutConfig?.sections?.reservation?.show !== false && (
+        <section
+          data-section="bookings"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-white via-orange-50/20 to-white relative overflow-hidden"
+        >
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-30 -z-10" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-50 rounded-full blur-3xl opacity-20 -z-10" />
 
-        <div className="container mx-auto max-w-7xl relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center">
-            {/* Left Side - Visual & Info */}
-            <div className="space-y-10">
-              <div>
-                <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-4 block">Reservations</span>
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
-                  {getLayoutText(storeConfig, 'food.reserveTable', 'Reserve Your Table')} <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">Perfect Table</span>
-                </h2>
-                <p className="text-lg text-gray-600 leading-relaxed font-medium">
-                  {getLayoutText(storeConfig, 'food.ourPhilosophy', 'Experience our exceptional dining atmosphere. Book a table in advance to ensure the best experience for you and your guests.')}
-                </p>
-              </div>
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-24 items-center">
+              {/* Left Side - Visual & Info */}
+              <div className="space-y-10">
+                <div>
+                  <span className="text-orange-500 font-bold tracking-widest uppercase text-xs mb-4 block">
+                    {layoutConfig?.sections?.reservation?.subtitle || "Reservations"}
+                  </span>
+                  <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
+                    {layoutConfig?.sections?.reservation?.title || getLayoutText(storeConfig, 'food.reserveTable', 'Reserve Your Table')}
+                  </h2>
+                  <p className="text-lg text-gray-600 leading-relaxed font-medium">
+                    {layoutConfig?.sections?.reservation?.description || getLayoutText(storeConfig, 'food.ourPhilosophy', 'Experience our exceptional dining atmosphere. Book a table in advance to ensure the best experience for you and your guests.')}
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="group flex items-start gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-orange-200 transition-all duration-300">
-                  <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                    <Calendar className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-1.5">Flexible Booking</h3>
-                    <p className="text-sm text-gray-600 font-medium">Book up to 90 days in advance</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-orange-200 transition-all duration-300">
-                  <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                    <Users className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-1.5">Group Dining</h3>
-                    <p className="text-sm text-gray-600 font-medium">Accommodate parties of all sizes</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-orange-200 transition-all duration-300">
-                  <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                    <Clock className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-1.5">Quick Confirmation</h3>
-                    <p className="text-sm text-gray-600 font-medium">Instant booking confirmation</p>
-                  </div>
-                </div>
-                <div className="group flex items-start gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-orange-200 transition-all duration-300">
-                  <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
-                    <Award className="h-6 w-6 text-orange-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900 mb-1.5">Special Occasions</h3>
-                    <p className="text-sm text-gray-600 font-medium">Perfect for celebrations</p>
-                  </div>
-                </div>
-              </div>
+                <div className="grid grid-cols-2 gap-6">
+                  {(() => {
+                    const defaultFeatures = [
+                      { title: "Flexible Booking", description: "Book up to 90 days in advance", icon: "Calendar" },
+                      { title: "Group Dining", description: "Accommodate parties of all sizes", icon: "Users" },
+                      { title: "Quick Confirmation", description: "Instant booking confirmation", icon: "Clock" },
+                      { title: "Special Occasions", description: "Perfect for celebrations", icon: "Award" }
+                    ];
+                    const features = layoutConfig?.sections?.reservation?.features || defaultFeatures;
+                    const iconMap: Record<string, any> = { Calendar, Users, Clock, Award };
 
-              <div className="pt-6">
-                <div className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border border-gray-100">
-                  <div className="p-3 bg-orange-50 rounded-xl">
-                    <Phone className="h-5 w-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-1">Prefer to call?</p>
-                    <span className="text-lg font-bold text-gray-900">(555) 123-4567</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+                    if (layoutConfig?.sections?.reservation?.showFeatures === false) return null;
 
-            {/* Right Side - Reservation Form */}
-            <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] p-8 md:p-10 border border-gray-100 relative overflow-hidden">
-              {/* Decorative gradient */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl opacity-50 -z-10" />
-              {submitSuccess ? (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle className="h-10 w-10 text-green-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Reservation Confirmed!</h3>
-                  <p className="text-gray-600">We&apos;ve sent a confirmation email to {reservationData.email}</p>
+                    return features.map((feature: any, idx: number) => {
+                      const IconComponent = iconMap[feature.icon] || Star;
+                      return (
+                        <div key={idx} className="group flex items-start gap-4 p-5 bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 hover:border-orange-200 transition-all duration-300">
+                          <div className="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
+                            <IconComponent className="h-6 w-6 text-orange-500" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-gray-900 mb-1.5">{feature.title}</h3>
+                            <p className="text-sm text-gray-600 font-medium">{feature.description}</p>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
-              ) : (
-                <form onSubmit={handleReservationSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Date */}
+
+                <div className="pt-6">
+                  <div className="flex items-center gap-4 p-5 bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <div className="p-3 bg-orange-50 rounded-xl">
+                      <Phone className="h-5 w-5 text-orange-500" />
+                    </div>
                     <div>
-                      <label className="block text-sm font-bold text-gray-900 mb-3">
-                        <Calendar className="h-4 w-4 inline mr-2 text-orange-500" />
-                        Date
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        min={minDate}
-                        max={maxDateString}
-                        value={reservationData.date}
-                        onChange={(e) => handleInputChange('date', e.target.value)}
-                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900"
-                      />
+                      <p className="text-sm text-gray-500 font-medium mb-1">Prefer to call?</p>
+                      <span className="text-lg font-bold text-gray-900">
+                        {layoutConfig?.sections?.reservation?.phone || "(555) 123-4567"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side - Reservation Form */}
+              <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] p-8 md:p-10 border border-gray-100 relative overflow-hidden">
+                {/* Decorative gradient */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl opacity-50 -z-10" />
+                {submitSuccess ? (
+                  <div className="text-center py-12">
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle className="h-10 w-10 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Reservation Confirmed!</h3>
+                    <p className="text-gray-600">We&apos;ve sent a confirmation email to {reservationData.email}</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReservationSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Date */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          <Calendar className="h-4 w-4 inline mr-2 text-orange-500" />
+                          Date
+                        </label>
+                        <input
+                          type="date"
+                          required
+                          min={minDate}
+                          max={maxDateString}
+                          value={reservationData.date}
+                          onChange={(e) => handleInputChange('date', e.target.value)}
+                          className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900"
+                        />
+                      </div>
+
+                      {/* Time */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          <Clock className="h-4 w-4 inline mr-2 text-orange-500" />
+                          Time
+                        </label>
+                        <select
+                          required
+                          value={reservationData.time}
+                          onChange={(e) => handleInputChange('time', e.target.value)}
+                          className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900"
+                        >
+                          <option value="">Select time</option>
+                          {timeSlots.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
-                    {/* Time */}
+                    {/* Guests */}
                     <div>
                       <label className="block text-sm font-bold text-gray-900 mb-3">
-                        <Clock className="h-4 w-4 inline mr-2 text-orange-500" />
-                        Time
+                        <Users className="h-4 w-4 inline mr-2 text-orange-500" />
+                        {getLayoutText(storeConfig, 'booking.selectDate', 'Number of Guests')}
                       </label>
                       <select
                         required
-                        value={reservationData.time}
-                        onChange={(e) => handleInputChange('time', e.target.value)}
+                        value={reservationData.guests}
+                        onChange={(e) => handleInputChange('guests', e.target.value)}
                         className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900"
                       >
-                        <option value="">Select time</option>
-                        {timeSlots.map((time) => (
-                          <option key={time} value={time}>
-                            {time}
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                          <option key={num} value={num.toString()}>
+                            {num} {num === 1 ? 'Guest' : 'Guests'}
                           </option>
                         ))}
+                        <option value="13+">13+ Guests (Large Party)</option>
                       </select>
                     </div>
-                  </div>
 
-                  {/* Guests */}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-3">
-                      <Users className="h-4 w-4 inline mr-2 text-orange-500" />
-                      {getLayoutText(storeConfig, 'booking.selectDate', 'Number of Guests')}
-                    </label>
-                    <select
-                      required
-                      value={reservationData.guests}
-                      onChange={(e) => handleInputChange('guests', e.target.value)}
-                      className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900"
+                    {/* Name */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-3">{getLayoutText(storeConfig, 'common.account', 'Full Name')}</label>
+                      <input
+                        type="text"
+                        required
+                        value={reservationData.name}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        placeholder="John Doe"
+                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Email */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          <Mail className="h-4 w-4 inline mr-2 text-orange-500" />
+                          {getLayoutText(storeConfig, 'common.account', 'Email')}
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={reservationData.email}
+                          onChange={(e) => handleInputChange('email', e.target.value)}
+                          placeholder="john@example.com"
+                          className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-3">
+                          <Phone className="h-4 w-4 inline mr-2 text-orange-500" />
+                          {getLayoutText(storeConfig, 'common.account', 'Phone')}
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={reservationData.phone}
+                          onChange={(e) => handleInputChange('phone', e.target.value)}
+                          placeholder="(555) 123-4567"
+                          className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Special Requests */}
+                    <div>
+                      <label className="block text-sm font-bold text-gray-900 mb-3">
+                        <MessageSquare className="h-4 w-4 inline mr-2 text-orange-500" />
+                        {getLayoutText(storeConfig, 'common.account', 'Special Requests (Optional)')}
+                      </label>
+                      <textarea
+                        value={reservationData.specialRequests}
+                        onChange={(e) => handleInputChange('specialRequests', e.target.value)}
+                        placeholder="Dietary restrictions, celebration details, seating preferences..."
+                        rows={4}
+                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all resize-none font-medium text-gray-900 placeholder:text-gray-400"
+                      />
+                    </div>
+
+                    {/* Submit Button */}
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full h-16 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold text-lg shadow-[0_10px_30px_rgba(249,115,22,0.3)] transition-all hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0"
                     >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                        <option key={num} value={num.toString()}>
-                          {num} {num === 1 ? 'Guest' : 'Guests'}
-                        </option>
-                      ))}
-                      <option value="13+">13+ Guests (Large Party)</option>
-                    </select>
-                  </div>
+                      {isSubmitting ? (
+                        <>
+                          <Clock className="h-5 w-5 mr-2 animate-spin" />
+                          {getLayoutText(storeConfig, 'common.account', 'Processing...')}
+                        </>
+                      ) : (
+                        <>
+                          <Calendar className="h-5 w-5 mr-2" />
+                          {getLayoutText(storeConfig, 'food.reserveTable', 'Reserve Table')}
+                        </>
+                      )}
+                    </Button>
 
-                  {/* Name */}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-3">{getLayoutText(storeConfig, 'common.account', 'Full Name')}</label>
-                    <input
-                      type="text"
-                      required
-                      value={reservationData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Email */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-900 mb-3">
-                        <Mail className="h-4 w-4 inline mr-2 text-orange-500" />
-                        {getLayoutText(storeConfig, 'common.account', 'Email')}
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={reservationData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        placeholder="john@example.com"
-                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
-                      />
-                    </div>
-
-                    {/* Phone */}
-                    <div>
-                      <label className="block text-sm font-bold text-gray-900 mb-3">
-                        <Phone className="h-4 w-4 inline mr-2 text-orange-500" />
-                        {getLayoutText(storeConfig, 'common.account', 'Phone')}
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={reservationData.phone}
-                        onChange={(e) => handleInputChange('phone', e.target.value)}
-                        placeholder="(555) 123-4567"
-                        className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Special Requests */}
-                  <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-3">
-                      <MessageSquare className="h-4 w-4 inline mr-2 text-orange-500" />
-                      {getLayoutText(storeConfig, 'common.account', 'Special Requests (Optional)')}
-                    </label>
-                    <textarea
-                      value={reservationData.specialRequests}
-                      onChange={(e) => handleInputChange('specialRequests', e.target.value)}
-                      placeholder="Dietary restrictions, celebration details, seating preferences..."
-                      rows={4}
-                      className="w-full px-5 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 outline-none transition-all resize-none font-medium text-gray-900 placeholder:text-gray-400"
-                    />
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full h-16 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-bold text-lg shadow-[0_10px_30px_rgba(249,115,22,0.3)] transition-all hover:scale-[1.02] hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Clock className="h-5 w-5 mr-2 animate-spin" />
-                        {getLayoutText(storeConfig, 'common.account', 'Processing...')}
-                      </>
-                    ) : (
-                      <>
-                        <Calendar className="h-5 w-5 mr-2" />
-                        {getLayoutText(storeConfig, 'food.reserveTable', 'Reserve Table')}
-                      </>
-                    )}
-                  </Button>
-
-                  <p className="text-xs text-center text-gray-500 font-medium">
-                    By submitting, you agree to our reservation policy. Cancellations must be made 24 hours in advance.
-                  </p>
-                </form>
-              )}
+                    <p className="text-xs text-center text-gray-500 font-medium">
+                      By submitting, you agree to our reservation policy. Cancellations must be made 24 hours in advance.
+                    </p>
+                  </form>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Newsletter / Promo Banner */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-7xl">
-          <div className="relative rounded-[2.5rem] overflow-hidden bg-gray-900 text-white isolate">
-            <div className="absolute inset-0 opacity-20">
-              <Image
-                src={getBannerImage(storeConfig, 'newsletter_bg', "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=2070&auto=format&fit=crop")}
-                alt="Pattern"
-                fill
-                className="object-cover"
-                unoptimized
-              />
-            </div>
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent" />
-
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-12 lg:p-20 gap-12">
-              <div className="max-w-xl space-y-6">
-                <span className="inline-block px-4 py-1.5 bg-orange-500 text-white rounded-full text-sm font-bold uppercase tracking-widest shadow-lg shadow-orange-500/30">
-                  Limited Time
-                </span>
-                <h2 className="text-4xl md:text-5xl font-black leading-tight">
-                  Get 20% Off Your <br /> First Order
-                </h2>
-                <p className="text-gray-300 text-lg leading-relaxed">
-                  Join our food lover&apos;s community and get exclusive access to new menu items and special offers.
-                </p>
-
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={newsletterEmail}
-                    onChange={(e) => setNewsletterEmail(e.target.value)}
-                    className="px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 flex-1 min-w-[300px]"
-                  />
-                  <Button onClick={handleSubscribe} size="lg" className="rounded-full px-8 py-6 bg-orange-600 hover:bg-orange-700 font-bold text-lg shadow-lg shadow-orange-600/30">
-                    Subscribe
-                  </Button>
-                </div>
+      {layoutConfig?.sections?.marketing?.show !== false && (
+        <section
+          data-section="marketing"
+          className="py-16 md:py-24 px-4 sm:px-6 lg:px-8"
+        >
+          <div className="container mx-auto max-w-7xl">
+            <div className="relative rounded-[2.5rem] overflow-hidden bg-gray-900 text-white isolate">
+              <div className="absolute inset-0 opacity-20">
+                <Image
+                  src={layoutConfig?.sections?.marketing?.backgroundImage || getBannerImage(storeConfig, 'newsletter_bg', "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=2070&auto=format&fit=crop")}
+                  alt="Pattern"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
               </div>
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent" />
 
-              <div className="hidden lg:block relative">
-                <div className="w-80 h-80 rounded-full bg-gradient-to-tr from-orange-500 to-yellow-500 p-1 animate-spin-slow">
-                  <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center p-8 text-center">
-                    <div>
-                      <span className="block text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">20%</span>
-                      <span className="text-2xl font-bold text-white tracking-widest uppercase">OFF</span>
+              <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between p-12 lg:p-20 gap-12">
+                <div className="max-w-xl space-y-6">
+                  <span className="inline-block px-4 py-1.5 bg-orange-500 text-white rounded-full text-sm font-bold uppercase tracking-widest shadow-lg shadow-orange-500/30">
+                    {layoutConfig?.sections?.marketing?.badge || "Limited Time"}
+                  </span>
+                  <h2 className="text-4xl md:text-5xl font-black leading-tight">
+                    {layoutConfig?.sections?.marketing?.title || "Get 20% Off Your <br /> First Order"}
+                  </h2>
+                  <p className="text-gray-300 text-lg leading-relaxed">
+                    {layoutConfig?.sections?.marketing?.subtitle || "Join our food lover's community and get exclusive access to new menu items and special offers."}
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                    <input
+                      type="email"
+                      placeholder={layoutConfig?.sections?.marketing?.newsletterPlaceholder || "Enter your email address"}
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className="px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 flex-1 min-w-[300px]"
+                    />
+                    <Button onClick={handleSubscribe} size="lg" className="rounded-full px-8 py-6 bg-orange-600 hover:bg-orange-700 font-bold text-lg shadow-lg shadow-orange-600/30">
+                      {layoutConfig?.sections?.marketing?.newsletterButton || "Subscribe"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="hidden lg:block relative">
+                  <div className="w-80 h-80 rounded-full bg-gradient-to-tr from-orange-500 to-yellow-500 p-1 animate-spin-slow">
+                    <div className="w-full h-full rounded-full bg-gray-900 flex items-center justify-center p-8 text-center">
+                      <div>
+                        <span className="block text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400">
+                          {layoutConfig?.sections?.marketing?.promoDiscount || "20%"}
+                        </span>
+                        <span className="text-2xl font-bold text-white tracking-widest uppercase">OFF</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

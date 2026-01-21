@@ -451,7 +451,27 @@ export function CheckoutPage({ storeConfig }) {
     const vatAmount = calculateVAT(subtotal, storeConfig.settings?.vat, storeConfig.settings?.taxRate);
     const vatLabel = getVATLabel(storeConfig.settings?.vat, storeConfig.settings?.taxRate);
     // Service charges are calculated on backend only, not displayed to customers
-    const total = subtotal + shipping + vatAmount;
+    // Calculate total: subtotal + shipping + VAT
+    // Ensure all values are valid numbers and handle edge cases
+    const safeSubtotal = Number.isFinite(subtotal) && subtotal >= 0 ? subtotal : 0;
+    const safeShipping = Number.isFinite(shipping) && shipping >= 0 ? shipping : 0;
+    const safeVatAmount = Number.isFinite(vatAmount) && vatAmount >= 0 ? vatAmount : 0;
+    // Calculate total - ensure it's never less than subtotal (unless there's a valid discount)
+    const calculatedTotal = safeSubtotal + safeShipping + safeVatAmount;
+    const total = Math.max(safeSubtotal, calculatedTotal); // At minimum, total should equal subtotal
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development' && safeSubtotal > 0 && total === 0) {
+        console.warn('[CheckoutPage] Total calculation issue detected:', {
+            subtotal: safeSubtotal,
+            shipping: safeShipping,
+            vatAmount: safeVatAmount,
+            calculatedTotal,
+            total,
+            checkoutTotal,
+            checkoutItemsCount: checkoutItems.length,
+            effectiveBuyNowItem: !!effectiveBuyNowItem,
+        });
+    }
     // Mock Form Data
     const [formData, setFormData] = useState({
         email: '',

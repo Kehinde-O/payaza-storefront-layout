@@ -1,21 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { StoreConfig } from '@/lib/store-types';
+import { StoreConfig } from '../../../lib/store-types';
 import { Facebook, Twitter, Instagram, Mail, MapPin, Phone, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { DotPattern } from '@/components/ui/background-patterns';
-import { cn } from '@/lib/utils';
+import { Button } from '../../../components/ui/button';
+import { DotPattern } from '../../../components/ui/background-patterns';
+import { cn } from '../../../lib/utils';
 import { useState } from 'react';
-import { useToast } from '@/components/ui/toast';
-import { getLayoutText, getThemeColor, getLogoUrl } from '@/lib/utils/asset-helpers';
-import { StoreLogo } from '@/components/ui/store-logos';
+import { useToast } from '../../../components/ui/toast';
+import { getLayoutText, getThemeColor, getLogoUrl } from '../../../lib/utils/asset-helpers';
+import { StoreLogo } from '../../../components/ui/store-logos';
+import { useStore } from '../../../lib/store-context';
 
 interface StoreFooterProps {
   storeConfig: StoreConfig;
 }
 
-export function StoreFooter({ storeConfig }: StoreFooterProps) {
+export function StoreFooter({ storeConfig: initialConfig }: StoreFooterProps) {
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const currentYear = new Date().getFullYear();
   const primaryColor = storeConfig.branding.primaryColor || '#000000';
   const isDarkTheme = storeConfig.branding.theme === 'dark';
@@ -54,6 +58,7 @@ export function StoreFooter({ storeConfig }: StoreFooterProps) {
 
   return (
     <footer
+      data-section="footer"
       className={cn(
         "relative border-t overflow-hidden backdrop-blur-xl"
       )}

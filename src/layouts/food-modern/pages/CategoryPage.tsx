@@ -19,12 +19,13 @@ interface CategoryPageProps {
   categorySlug: string;
 }
 
-export function CategoryPage({ storeConfig, categorySlug }: CategoryPageProps) {
+export function CategoryPage({ storeConfig: initialConfig, categorySlug }: CategoryPageProps) {
+  const { store, addToCart } = useStore();
+  const storeConfig = store || initialConfig;
+
   const categories = storeConfig.categories || [];
   const category = categories.find(c => c.slug === categorySlug);
-  const products = filterActiveProducts(storeConfig.products?.filter(p => p.categoryId === category?.id) || []);
-  const services = filterActiveServices(storeConfig.services?.filter(s => s.categoryId === category?.id) || []);
-  const { addToCart } = useStore();
+  const menuItems = (storeConfig.menuItems || []).filter(item => item.categoryId === category?.id);
   const { addToast } = useToast();
   const { trackEvent } = useAnalytics();
 
@@ -42,25 +43,22 @@ export function CategoryPage({ storeConfig, categorySlug }: CategoryPageProps) {
     }
   }, [category?.id, storeConfig?.id, trackEvent]);
 
-  // Determine if this is a service-based store
-  const isServiceStore = storeConfig.type === 'booking' || 
-                        storeConfig.layout === 'booking' || 
-                        storeConfig.layout === 'booking-agenda' ||
-                        (storeConfig.services && storeConfig.services.length > 0);
-  
-  // Show services if it's a service store, or if there are services for this category
-  const shouldShowServices = isServiceStore || services.length > 0;
-  const shouldShowProducts = !isServiceStore || products.length > 0;
-  
-  const hasItems = (shouldShowServices && services.length > 0) || (shouldShowProducts && products.length > 0);
+  const hasItems = menuItems.length > 0;
 
-  const handleAddToCart = (product: StoreProduct) => {
+  const handleAddToCart = (item: any) => {
+    const product = {
+      ...item,
+      slug: item.id,
+      images: item.image ? [item.image] : [],
+      variants: [],
+      specifications: {},
+      rating: 0,
+      reviewCount: 0,
+      categoryId: item.categoryId || '',
+      inStock: true
+    };
     addToCart(product);
-    addToast(`${product.name} added to cart`, 'success');
-  };
-
-  const handleQuickView = (product: StoreProduct) => {
-    addToast(`Quick view for ${product.name}`, 'info');
+    addToast(`${item.name} added to order`, 'success');
   };
 
   if (!category) {
@@ -121,122 +119,49 @@ export function CategoryPage({ storeConfig, categorySlug }: CategoryPageProps) {
         {!hasItems ? (
           <div className="text-center py-20 border border-dashed border-gray-300 rounded-3xl">
             <p className="text-gray-500 text-lg">
-              {(() => {
-                const itemType = isServiceStore ? 'services' : 'products';
-                const defaultMessage = isServiceStore 
-                  ? 'No services found in this category.'
-                  : 'No products found in this category.';
-                
-                // Try to get from layout config, fallback to default
-                return getLayoutText(
-                  storeConfig,
-                  `sections.categories.emptyState.${itemType}`,
-                  getTextContent(
-                    storeConfig,
-                    `category_empty_${itemType}`,
-                    defaultMessage
-                  )
-                );
-              })()}
+              No items found in this category.
             </p>
             <Button className="mt-4" onClick={() => window.history.back()}>Go Back</Button>
           </div>
         ) : (
           <div className="space-y-12">
-            {/* Services Section */}
-            {shouldShowServices && services.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-bold mb-6">
-                  {isServiceStore ? 'Services' : 'Services in this Category'}
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {services.map((service) => (
-                    <div key={service.id} className="group flex flex-col h-full">
-                      {/* Service Card Image */}
-                      <Link 
-                        href={`/${storeConfig.slug}/book?service=${service.slug}`}
-                        className="block relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 mb-4 shadow-sm group-hover:shadow-xl transition-all duration-500"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {menuItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="group bg-[#1A1A1A] rounded-none overflow-hidden border border-white/5 hover:border-orange-500/50 transition-all duration-500 flex flex-col h-full"
+                >
+                  <div className="relative aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-700">
+                    <ImageWithFallback 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      skeletonAspectRatio="square"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <Button 
+                        className="rounded-none bg-white text-black hover:bg-orange-600 hover:text-white transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg font-bold px-8 uppercase tracking-widest text-xs"
+                        onClick={() => handleAddToCart(item)}
                       >
-                        <Image 
-                          src={service.image || 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&auto=format&fit=crop&q=60'} 
-                          alt={service.name} 
-                          fill
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          unoptimized
-                        />
-                        {/* Price Badge */}
-                        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur px-4 py-2 rounded-full text-sm font-bold shadow-sm text-gray-900">
-                          {formatCurrency(service.price, service.currency || storeConfig.settings?.currency || 'USD')}
-                        </div>
-                        
-                        {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                          <Button className="rounded-full bg-white text-black hover:bg-gray-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg font-bold px-8">
-                            Book Now
-                          </Button>
-                        </div>
-                      </Link>
-                      
-                      {/* Service Content */}
-                      <div className="flex flex-col flex-1">
-                        <Link href={`/${storeConfig.slug}/book?service=${service.slug}`}>
-                          <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-gray-600 transition-colors">
-                            {service.name}
-                          </h3>
-                        </Link>
-                        
-                        <p className="text-gray-500 mb-4 line-clamp-2 leading-relaxed text-sm flex-1">
-                          {service.description}
-                        </p>
-                        
-                        {/* Meta Info */}
-                        <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm font-medium text-gray-500">
-                          <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-gray-400" /> 
-                              {service.duration} mins
-                            </div>
-                            {service.provider && service.provider.rating && (
-                              <div className="flex items-center gap-2">
-                                <Star className="w-4 h-4 fill-gray-200 text-gray-200" />
-                                {service.provider.rating}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <Link 
-                            href={`/${storeConfig.slug}/book?service=${service.slug}`}
-                            className="flex items-center gap-2 text-black font-bold group/link"
-                          >
-                            Book <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
-                          </Link>
-                        </div>
-                      </div>
+                        Order Now
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div className="p-8 flex flex-col flex-1 text-center">
+                    <h3 className="font-bold text-xl text-white uppercase tracking-tight mb-2 group-hover:text-orange-500 transition-colors">
+                      {item.name}
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed flex-1 font-light italic">
+                      {item.description}
+                    </p>
+                    <span className="text-2xl font-serif text-white">
+                      {formatCurrency(item.price, storeConfig.settings?.currency || 'USD')}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Products Section */}
-            {shouldShowProducts && products.length > 0 && (
-              <div>
-                {shouldShowServices && services.length > 0 && (
-                  <h2 className="text-2xl font-bold mb-6">Products in this Category</h2>
-                )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {products.map((product) => (
-                <ProductCard
-                   key={product.id}
-                   product={product}
-                   storeSlug={storeConfig.slug}
-                   onAddToCart={handleAddToCart}
-                   onQuickView={handleQuickView}
-                />
-            ))}
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>

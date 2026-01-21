@@ -4,13 +4,18 @@ import { StoreConfig } from '@/lib/store-types';
 import { Users, Award, Heart, Leaf, MapPin, Clock, Mail, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DotPattern } from '@/components/ui/background-patterns';
+import { useStore } from '@/lib/store-context';
 import Image from 'next/image';
 
 interface AboutPageProps {
   storeConfig: StoreConfig;
 }
 
-export function AboutPage({ storeConfig }: AboutPageProps) {
+export function AboutPage({ storeConfig: initialConfig }: AboutPageProps) {
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+  
+  const menuItems = storeConfig.menuItems || [];
   const primaryColor = storeConfig.branding.primaryColor;
   const secondaryColor = storeConfig.branding.secondaryColor || primaryColor;
   const aboutConfig = storeConfig.layoutConfig?.pages?.about;
@@ -26,34 +31,34 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
   const values = [
     {
       icon: Award,
-      title: "Quality First",
-      description: "We never compromise on the quality of our products and services."
+      title: "Gourmet Excellence",
+      description: "Elevation of traditional flavors into modern culinary masterpieces."
     },
     {
       icon: Users,
-      title: "Customer Focused",
-      description: "Your satisfaction is our top priority. We're here to help."
+      title: "Community Focused",
+      description: "A hub for food lovers to connect and share extraordinary experiences."
     },
     {
       icon: Heart,
-      title: "Passion",
-      description: "We love what we do and it shows in every detail of our work."
+      title: "Artistic Passion",
+      description: "We view every plate as a canvas, blending taste with visual artistry."
     },
     {
       icon: Leaf,
-      title: "Sustainability",
-      description: "Committed to eco-friendly practices and responsible sourcing."
+      title: "Modern Ethics",
+      description: "Sustainable practices and responsible sourcing for a better tomorrow."
     }
   ];
 
   return (
     <div className="min-h-screen bg-white pb-20 overflow-hidden">
       {/* Hero Section */}
-      <section className="relative h-[60vh] min-h-[500px] w-full overflow-hidden">
+      <section data-section="hero" className="relative h-[60vh] min-h-[500px] w-full overflow-hidden">
         <div className="absolute inset-0">
-          <Image 
-            src={heroImage} 
-            alt="About Us" 
+          <Image
+            src={heroImage}
+            alt="About Us"
             fill
             className="w-full h-full object-cover transform scale-105 animate-pulse-slow"
             unoptimized
@@ -79,25 +84,25 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
       </section>
 
       {/* Our Story */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 relative">
+      <section data-section="story" className="py-24 px-4 sm:px-6 lg:px-8 relative">
         <div className="absolute top-0 right-0 -mt-24 -mr-24 w-96 h-96 bg-gray-50 rounded-full blur-3xl -z-10" />
-        
+
         <div className="container mx-auto max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="relative">
               {galleryImages && galleryImages.length > 0 ? (
-                 <div className="grid grid-cols-2 gap-4">
-                    {galleryImages.slice(0, 4).map((img, i) => (
-                        <div key={i} className={`relative overflow-hidden rounded-2xl shadow-lg ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'}`}>
-                            <Image src={img.image} alt={img.caption || "Gallery Image"} fill className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" unoptimized />
-                        </div>
-                    ))}
-                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {galleryImages.slice(0, 4).map((img, i) => (
+                    <div key={i} className={`relative overflow-hidden rounded-2xl shadow-lg ${i === 0 ? 'col-span-2 aspect-[16/9]' : 'aspect-square'}`}>
+                      <Image src={img.image} alt={img.caption || "Gallery Image"} fill className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" unoptimized />
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl">
-                  <Image 
-                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" 
-                    alt="Our Team" 
+                  <Image
+                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop"
+                    alt="Our Team"
                     fill
                     className="w-full h-full object-cover"
                     unoptimized
@@ -114,7 +119,7 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
                 <Heart className="w-10 h-10" style={{ color: primaryColor, fill: primaryColor }} />
               </div>
             </div>
-            
+
             <div className="space-y-10">
               <div>
                 <span className="text-sm font-bold uppercase tracking-widest mb-3 block" style={{ color: primaryColor }}>
@@ -129,12 +134,12 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
                   ))}
                   {!pageContent && (
                     <>
-                    <p>
+                      <p>
                         Founded with a bold vision to redefine excellence in the <span className="font-semibold text-gray-900">{storeConfig.type}</span> industry, {storeConfig.name} has grown from a small passion project into a beloved brand. We believe in the power of quality, innovation, and community.
-                    </p>
-                    <p>
+                      </p>
+                      <p>
                         Every day, we strive to bring you the best products, curated with care and delivered with a smile. Our team is dedicated to ensuring that your experience with us is nothing short of exceptional.
-                    </p>
+                      </p>
                     </>
                   )}
                 </div>
@@ -161,19 +166,19 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 relative overflow-hidden">
+      <section data-section="stats" className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <DotPattern color={primaryColor} cx={2} cy={2} cr={2} width={30} height={30} />
         </div>
         <div className="absolute inset-0" style={{ backgroundColor: `${secondaryColor}15` }} />
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
             {[
-              { label: "Happy Customers", value: "10k+" },
-              { label: "Products", value: storeConfig.products?.length ? `${storeConfig.products.length * 10}+` : "50+" },
-              { label: "Years Active", value: "5+" },
-              { label: "Team Members", value: "25+" }
+              { label: "Elite Members", value: "5k+" },
+              { label: "Modern Creations", value: menuItems?.length ? `${menuItems.length}+` : "35+" },
+              { label: "Culinary Awards", value: "12+" },
+              { label: "Master Chefs", value: "8+" }
             ].map((stat, idx) => (
               <div key={idx} className="text-center group">
                 <div className="text-5xl md:text-6xl font-black mb-2 tracking-tight transition-transform group-hover:scale-110 duration-300" style={{ color: primaryColor }}>
@@ -189,7 +194,7 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
       </section>
 
       {/* Contact Info - Modern Cards */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
+      <section data-section="contact-info" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get in Touch</h2>
@@ -197,7 +202,7 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
               Have questions? We&apos;d love to hear from you. Reach out to our team via email, phone, or visit us at our store.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="group p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -205,11 +210,11 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Visit Us</h3>
               <p className="text-gray-600 leading-relaxed">
-                123 Store Street<br />
-                Commerce City, ST 12345
+                {storeConfig.contactInfo?.address?.street || '123 Store Street'}<br />
+                {storeConfig.contactInfo?.address?.city || 'Commerce City'}, {storeConfig.contactInfo?.address?.state || 'ST'} {storeConfig.contactInfo?.address?.zipCode || '12345'}
               </p>
             </div>
-            
+
             <div className="group p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center relative overflow-hidden">
               <div className="absolute inset-0 border-2 border-transparent group-hover:border-orange-100 rounded-[2rem] transition-colors pointer-events-none" />
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -217,22 +222,26 @@ export function AboutPage({ storeConfig }: AboutPageProps) {
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Email Us</h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                hello@{storeConfig.slug}.com<br />
-                support@{storeConfig.slug}.com
+                {storeConfig.contactInfo?.email || `hello@${storeConfig.slug}.com`}<br />
+                {storeConfig.contactInfo?.phone || '+1 (555) 123-4567'}
               </p>
               <Button variant="link" className="text-orange-600 font-bold p-0 h-auto hover:no-underline group-hover:translate-x-1 transition-transform">
                 Send a message <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
-            
+
             <div className="group p-8 rounded-[2rem] bg-gray-50 border border-gray-100 hover:shadow-xl hover:-translate-y-2 transition-all duration-300 text-center">
               <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Clock className="h-8 w-8 text-gray-400 group-hover:text-green-500 transition-colors" />
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Opening Hours</h3>
               <p className="text-gray-600 leading-relaxed">
-                Mon - Fri: 9am - 6pm<br />
-                Sat - Sun: 10am - 4pm
+                {storeConfig.locations?.[0]?.openingHours || (
+                  <>
+                    Mon - Fri: 9am - 6pm<br />
+                    Sat - Sun: 10am - 4pm
+                  </>
+                )}
               </p>
             </div>
           </div>

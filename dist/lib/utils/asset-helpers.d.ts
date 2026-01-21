@@ -1,4 +1,13 @@
 import { StoreConfig } from '../../lib/store-types';
+import { shouldUseAPI } from './demo-detection';
+export { shouldUseAPI };
+/**
+ * Normalizes store image URLs to absolute URLs
+ * Handles both absolute URLs (R2/Cloudflare/etc.) and relative paths
+ * @param raw - The raw image URL (can be relative or absolute)
+ * @returns Normalized absolute URL or null if invalid
+ */
+export declare function normalizeStoreImageUrl(raw: unknown): string | null;
 /**
  * Gets text content from backend assignedText for real stores, or returns fallback for demo stores
  * @param storeConfig - The store configuration

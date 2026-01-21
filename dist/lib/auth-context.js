@@ -1,10 +1,10 @@
 'use client';
 import { jsx as _jsx } from "react/jsx-runtime";
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from './services/auth.service';
 import { customerService } from './services/customer.service';
-const AuthContext = createContext({
+export const AuthContext = createContext({
     user: null,
     isAuthenticated: false,
     isLoading: true,
@@ -21,6 +21,16 @@ export function AuthProvider({ children }) {
         const loadUser = async () => {
             try {
                 setIsLoading(true);
+                // Check if we're in preview mode - skip all API calls to prevent session invalidation
+                const isPreview = typeof window !== 'undefined' && window.__IS_PREVIEW__;
+                if (isPreview) {
+                    // In preview mode, don't make any API calls or clear tokens
+                    // Just return empty auth state to prevent interfering with parent window session
+                    console.log('[AuthProvider] Preview mode detected - skipping auth API calls');
+                    setUser(null);
+                    setIsLoading(false);
+                    return;
+                }
                 const token = localStorage.getItem('token');
                 if (token) {
                     // Try to get current user from API
@@ -67,7 +77,7 @@ export function AuthProvider({ children }) {
         };
         loadUser();
     }, []);
-    const login = async (email, password) => {
+    const login = useCallback(async (email, password) => {
         setIsLoading(true);
         try {
             // Password is required for real API login
@@ -124,15 +134,15 @@ export function AuthProvider({ children }) {
         finally {
             setIsLoading(false);
         }
-    };
-    const logout = () => {
+    }, []);
+    const logout = useCallback(() => {
         setUser(null);
         localStorage.removeItem('storefront_user');
         localStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         router.push('/');
-    };
-    const updateProfile = async (data) => {
+    }, [router]);
+    const updateProfile = useCallback(async (data) => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -167,12 +177,12 @@ export function AuthProvider({ children }) {
         finally {
             setIsLoading(false);
         }
-    };
+    }, []);
     /**
      * Update user state without triggering isLoading
      * This is used for updating user state after profile save without showing full-page loading
      */
-    const updateUserState = (user) => {
+    const updateUserState = useCallback((user) => {
         try {
             // Validate required fields before updating
             if (!user || !user.id || !user.firstName || !user.lastName || !user.email) {
@@ -193,15 +203,16 @@ export function AuthProvider({ children }) {
             console.error('Error in updateUserState:', error);
             throw error;
         }
-    };
-    return (_jsx(AuthContext.Provider, { value: {
-            user,
-            isAuthenticated: !!user,
-            isLoading,
-            login,
-            logout,
-            updateProfile,
-            updateUserState
-        }, children: children }));
+    }, []);
+    const value = useMemo(() => ({
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        logout,
+        updateProfile,
+        updateUserState
+    }), [user, isLoading, login, logout, updateProfile, updateUserState]);
+    return (_jsx(AuthContext.Provider, { value: value, children: children }));
 }
 export const useAuth = () => useContext(AuthContext);

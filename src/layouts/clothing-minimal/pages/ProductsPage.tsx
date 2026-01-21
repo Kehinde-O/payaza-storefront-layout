@@ -1,25 +1,25 @@
 'use client';
 
-import { StoreConfig, StoreProduct } from '@/lib/store-types';
-import { Button } from '@/components/ui/button';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
-import { Sheet } from '@/components/ui/sheet';
-import { ImageWithFallback } from '@/components/ui/image-with-fallback';
-import { ProductCard } from '@/components/ui/product-card';
-import { ProductGridSkeleton } from '@/components/ui/skeletons';
-import { CategoryTree } from '@/components/ui/category-tree';
-import { useStore } from '@/lib/store-context';
-import { useToast } from '@/components/ui/toast';
-import { useLoading } from '@/lib/loading-context';
-import { useAnalytics } from '@/hooks/use-analytics';
+import { StoreConfig, StoreProduct } from '../../../lib/store-types';
+import { Button } from '../../../components/ui/button';
+import { Breadcrumbs } from '../../../components/ui/breadcrumbs';
+import { Sheet } from '../../../components/ui/sheet';
+import { ImageWithFallback } from '../../../components/ui/image-with-fallback';
+import { ProductCard } from '../../../components/ui/product-card';
+import { ProductGridSkeleton } from '../../../components/ui/skeletons';
+import { CategoryTree } from '../../../components/ui/category-tree';
+import { useStore } from '../../../lib/store-context';
+import { useToast } from '../../../components/ui/toast';
+import { useLoading } from '../../../lib/loading-context';
+import { useAnalytics } from '../../../hooks/use-analytics';
 import { ShoppingCart, Heart, ChevronDown, ChevronUp, Star, Check, Search, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useState, useMemo, useEffect, Suspense } from 'react';
-import { formatCurrency, filterActiveProducts } from '@/lib/utils';
-import { getAllCategoryIds, flattenCategoryTree, buildCategoryTree } from '@/lib/utils/category-tree';
-import { getBannerImage, getLayoutText } from '@/lib/utils/asset-helpers';
-import { shouldUseAPI } from '@/lib/utils/demo-detection';
+import { formatCurrency, filterActiveProducts } from '../../../lib/utils';
+import { getAllCategoryIds, flattenCategoryTree, buildCategoryTree } from '../../../lib/utils/category-tree';
+import { getBannerImage, getLayoutText } from '../../../lib/utils/asset-helpers';
+import { shouldUseAPI } from '../../../lib/utils/demo-detection';
 
 interface ProductsPageProps {
   storeConfig: StoreConfig;
@@ -27,7 +27,10 @@ interface ProductsPageProps {
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'rating';
 
-function ProductsPageContent({ storeConfig }: ProductsPageProps) {
+function ProductsPageContent({ storeConfig: initialConfig }: ProductsPageProps) {
+  const { store, addToCart } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [products, setProducts] = useState<StoreProduct[]>(() => {
@@ -93,7 +96,6 @@ function ProductsPageContent({ storeConfig }: ProductsPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeConfig.products, storeConfig.id]); // Removed isLoadingProducts from deps to prevent infinite loops
   
-  const { addToCart } = useStore();
   const { addToast } = useToast();
   const { startBackendLoading, stopBackendLoading } = useLoading();
   const { trackEvent } = useAnalytics();
@@ -318,88 +320,90 @@ function ProductsPageContent({ storeConfig }: ProductsPageProps) {
     <div className="min-h-screen bg-white font-sans text-slate-900">
       
       {/* Header Section */}
-      <div className="relative overflow-hidden bg-white">
-        {/* Category Header Image Background - if available */}
-        {categoryHeaderImage && (
-          <div className="absolute inset-0 z-0">
-            <ImageWithFallback
-              src={categoryHeaderImage}
-              alt={categoryHeaderTitle || storeConfig.name}
-              className="w-full h-full object-cover"
-              skeletonAspectRatio="16/9"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
-          </div>
-        )}
-        
-        {/* Decorative background elements - only show if no category header image */}
-        {!categoryHeaderImage && (
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
-             <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-gray-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow"></div>
-             <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-gray-50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-          </div>
-        )}
+      {layoutConfig?.sections?.productsHeader?.show !== false && (
+        <div className="relative overflow-hidden bg-white">
+          {/* Category Header Image Background - if available */}
+          {(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) && (
+            <div className="absolute inset-0 z-0">
+              <ImageWithFallback
+                src={layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage}
+                alt={layoutConfig?.sections?.productsHeader?.title || categoryHeaderTitle || storeConfig.name}
+                className="w-full h-full object-cover"
+                skeletonAspectRatio="16/9"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60" />
+            </div>
+          )}
+          
+          {/* Decorative background elements - only show if no category header image */}
+          {!(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) && (
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+               <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-gray-100 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow"></div>
+               <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-gray-50 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+            </div>
+          )}
 
-        <div className={`container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-12 pb-16 lg:pt-20 lg:pb-24 ${categoryHeaderImage ? 'min-h-[500px] flex items-center' : ''}`}>
-          <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
-            
-            {/* Text Content */}
-            <div className={`w-full text-center lg:text-left animate-fade-in-up ${categoryHeaderImage ? 'text-white' : ''}`}>
-              <div className="flex justify-center lg:justify-start mb-6">
-                {/* Breadcrumb with backdrop for image visibility */}
-                <div className={categoryHeaderImage ? 'bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20' : ''}>
-                  <Breadcrumbs items={breadcrumbItems} variant={categoryHeaderImage ? 'light' : 'default'} />
+          <div className={`container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-12 pb-16 lg:pt-20 lg:pb-24 ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'min-h-[500px] flex items-center' : ''}`}>
+            <div className="flex flex-col items-center w-full max-w-4xl mx-auto">
+              
+              {/* Text Content */}
+              <div className={`w-full text-center lg:text-left animate-fade-in-up ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'text-white' : ''}`}>
+                <div className="flex justify-center lg:justify-start mb-6">
+                  {/* Breadcrumb with backdrop for image visibility */}
+                  <div className={(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20' : ''}>
+                    <Breadcrumbs items={breadcrumbItems} variant={(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'light' : 'default'} />
+                  </div>
+                </div>
+                
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-6 ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'bg-white/20 backdrop-blur-md text-white border border-white/30' : 'bg-black/5 text-gray-900'}`}>
+                  <span className={`w-2 h-2 rounded-full animate-pulse ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'bg-white' : 'bg-black'}`}></span>
+                  {layoutConfig?.sections?.productsHeader?.badge || getLayoutText(storeConfig, 'common.newArrivals', 'New Arrivals 2024')}
+              </div>
+                
+                <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1] ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'text-white' : 'text-gray-900'}`}>
+                  {layoutConfig?.sections?.productsHeader?.title || categoryHeaderTitle || (
+                    <>
+                      Explore The Collections of <br/>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900">{storeConfig.name}</span>
+                    </>
+                  )}
+                </h1>
+                
+                <p className={`text-lg mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0 ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'text-white/90' : 'text-gray-600'}`}>
+                  {layoutConfig?.sections?.productsHeader?.description || getLayoutText(storeConfig, 'category_header:description', "Don't miss out on shopping our latest collection! curated for quality and style. Experience the perfect blend of modern aesthetics and premium craftsmanship.")}
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                   {/* Primary button - only show if text is not empty */}
+                   {(layoutConfig?.sections?.productsHeader?.primaryButtonText || primaryButtonText) && (layoutConfig?.sections?.productsHeader?.primaryButtonText || primaryButtonText).trim() !== '' && (
+                     <Button 
+                        className={`h-12 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'bg-white text-gray-900 hover:bg-gray-100' : ''}`}
+                        onClick={() => {
+                          const element = document.getElementById('product-grid');
+                          element?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                     >
+                       {layoutConfig?.sections?.productsHeader?.primaryButtonText || primaryButtonText}
+                     </Button>
+                   )}
+                   {/* Secondary button - only show if text is not empty, matches Start Shopping design */}
+                   {(layoutConfig?.sections?.productsHeader?.secondaryButtonText || secondaryButtonText) && (layoutConfig?.sections?.productsHeader?.secondaryButtonText || secondaryButtonText).trim() !== '' && (
+                     <Button 
+                        className={`h-12 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${(layoutConfig?.sections?.productsHeader?.image || categoryHeaderImage) ? 'bg-white/10 backdrop-blur-md text-white border border-white/30 hover:bg-white/20' : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200'}`}
+                        onClick={() => {
+                          window.location.href = `/${storeConfig.slug}/categories`;
+                        }}
+                     >
+                       {layoutConfig?.sections?.productsHeader?.secondaryButtonText || secondaryButtonText}
+                     </Button>
+                   )}
                 </div>
               </div>
-              
-              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-6 ${categoryHeaderImage ? 'bg-white/20 backdrop-blur-md text-white border border-white/30' : 'bg-black/5 text-gray-900'}`}>
-                <span className={`w-2 h-2 rounded-full animate-pulse ${categoryHeaderImage ? 'bg-white' : 'bg-black'}`}></span>
-                {getLayoutText(storeConfig, 'common.newArrivals', 'New Arrivals 2024')}
-            </div>
-              
-              <h1 className={`text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6 leading-[1.1] ${categoryHeaderImage ? 'text-white' : 'text-gray-900'}`}>
-                {categoryHeaderTitle || (
-                  <>
-                    Explore The Collections of <br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900">{storeConfig.name}</span>
-                  </>
-                )}
-              </h1>
-              
-              <p className={`text-lg mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0 ${categoryHeaderImage ? 'text-white/90' : 'text-gray-600'}`}>
-                {getLayoutText(storeConfig, 'category_header:description', "Don't miss out on shopping our latest collection! curated for quality and style. Experience the perfect blend of modern aesthetics and premium craftsmanship.")}
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                 {/* Primary button - only show if text is not empty */}
-                 {primaryButtonText && primaryButtonText.trim() !== '' && (
-                   <Button 
-                      className={`h-12 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${categoryHeaderImage ? 'bg-white text-gray-900 hover:bg-gray-100' : ''}`}
-                      onClick={() => {
-                        const element = document.getElementById('product-grid');
-                        element?.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                   >
-                     {primaryButtonText}
-                   </Button>
-                 )}
-                 {/* Secondary button - only show if text is not empty, matches Start Shopping design */}
-                 {secondaryButtonText && secondaryButtonText.trim() !== '' && (
-                   <Button 
-                      className={`h-12 px-8 rounded-full text-base font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 ${categoryHeaderImage ? 'bg-white/10 backdrop-blur-md text-white border border-white/30 hover:bg-white/20' : 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200'}`}
-                      onClick={() => {
-                        window.location.href = `/${storeConfig.slug}/categories`;
-                      }}
-                   >
-                     {secondaryButtonText}
-                   </Button>
-                 )}
-              </div>
-            </div>
 
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div data-content-ready className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         

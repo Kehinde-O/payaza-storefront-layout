@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { StoreConfig } from '@/lib/store-types';
-import { Button } from '@/components/ui/button';
+import { StoreConfig } from '../../../lib/store-types';
+import { Button } from '../../../components/ui/button';
 import { ShoppingCart, Heart, Search, Menu, User, X, ChevronRight, LogIn, ChevronDown, Instagram, Twitter, Youtube, Home, Info, Phone, Package, Calendar, BookOpen, GraduationCap, Laptop, Sparkles, Tag, LayoutGrid } from 'lucide-react';
 
 // Navigation icon helper
@@ -22,12 +22,12 @@ const getNavIcon = (label: string) => {
   return null;
 };
 import { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/lib/auth-context';
-import { StoreLogo } from '@/components/ui/store-logos';
-import { useStore } from '@/lib/store-context';
-import { getLayoutText, getThemeColor, getLogoUrl } from '@/lib/utils/asset-helpers';
-import { AvatarImage } from '@/components/ui/avatar-image';
+import { cn } from '../../../lib/utils';
+import { useAuth } from '../../../lib/auth-context';
+import { StoreLogo } from '../../../components/ui/store-logos';
+import { useStore } from '../../../lib/store-context';
+import { getLayoutText, getThemeColor, getLogoUrl } from '../../../lib/utils/asset-helpers';
+import { AvatarImage } from '../../../components/ui/avatar-image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface StoreHeaderProps {
@@ -35,8 +35,9 @@ interface StoreHeaderProps {
   cartItemCount?: number;
 }
 
-export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps) {
-  const { wishlist } = useStore();
+export function StoreHeader({ storeConfig: initialConfig, cartItemCount = 0 }: StoreHeaderProps) {
+  const { store, wishlist } = useStore();
+  const storeConfig = store || initialConfig;
   const wishlistCount = wishlist.length;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -80,6 +81,7 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
   return (
     <>
       <header
+        data-section="header"
         className={cn(
           "sticky top-0 z-[60] w-full transition-all duration-500 backdrop-blur-xl border-b",
           scrolled ? "shadow-lg border-gray-100 dark:border-white/5 py-1" : "border-transparent py-2.5"
@@ -100,7 +102,7 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                 {!getLogoUrl(storeConfig) && (
                   <span
                     className={cn(
-                      "text-xl font-bold tracking-tight transition-colors hidden sm:block",
+                      "text-xl font-bold tracking-tight transition-colors hidden xl:block",
                       isDarkTheme ? "text-white" : "text-gray-900"
                     )}
                   >
@@ -112,88 +114,122 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-              {storeConfig.navigation.main.map((item, index) => {
-                const Icon = (item as any).icon ? ((item as any).icon === 'BookOpen' ? BookOpen : (item as any).icon === 'GraduationCap' ? GraduationCap : (item as any).icon === 'Info' ? Info : getNavIcon(item.label)) : getNavIcon(item.label);
-                return (
-                  <Link
-                    key={`${index}-${item.href}`}
-                    href={`/${storeConfig.slug}${item.href}`}
-                    className={cn(
-                      "px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all rounded-full flex items-center gap-2.5 group/nav",
-                      isDarkTheme
-                        ? "text-gray-400 hover:text-white hover:bg-white/10"
-                        : "text-gray-600 hover:text-black hover:bg-gray-100"
-                    )}
-                  >
-                    {Icon && <Icon className="w-4 h-4 transition-transform group-hover/nav:scale-110" />}
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {/* Combined Navigation & Categories */}
+              {(() => {
+                const menuItems = storeConfig.navigation.main;
+                const categories = parentCategories;
 
-              {/* Catalogue Dropdown */}
-              {parentCategories.length > 0 && (
-                <div 
-                  className="relative group"
-                  onMouseEnter={() => setIsCatalogueOpen(true)}
-                  onMouseLeave={() => setIsCatalogueOpen(false)}
-                >
-                  <button
-                    className={cn(
-                      "px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.15em] transition-all rounded-full flex items-center gap-2 group/nav",
-                      isDarkTheme
-                        ? "text-gray-400 hover:text-white hover:bg-white/10"
-                        : "text-gray-600 hover:text-black hover:bg-gray-100"
-                    )}
-                  >
-                    <LayoutGrid className="w-4 h-4 transition-transform group-hover/nav:scale-110" />
-                    Catalogue
-                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isCatalogueOpen && "rotate-180")} />
-                  </button>
-                  
-                  <AnimatePresence>
-                    {isCatalogueOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
+                // Logic to determine how many categories to show directly
+                // Max total top-level items (menu + categories)
+                const maxTotalItems = storeConfig.layout === 'motivational-speaker' ? 5 : 6;
+
+                // How many categories can we fit?
+                const categoriesToShowCount = Math.max(0, maxTotalItems - menuItems.length);
+
+                const categoriesToDisplay = categories.slice(0, categoriesToShowCount);
+                const overflowCategories = categories.slice(categoriesToShowCount);
+
+                return (
+                  <>
+                    {/* Render Menu Items */}
+                    {menuItems.map((item, index) => {
+                      return (
+                        <Link
+                          key={`nav-${index}-${item.href}`}
+                          href={`/${storeConfig.slug}${item.href}`}
+                          className={cn(
+                            "px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-all rounded-full flex items-center gap-2 group/nav whitespace-nowrap",
+                            isDarkTheme
+                              ? "text-gray-400 hover:text-white hover:bg-white/10"
+                              : "text-gray-600 hover:text-black hover:bg-gray-100"
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+
+                    {/* Render Direct Categories */}
+                    {categoriesToDisplay.map((cat) => (
+                      <Link
+                        key={`cat-direct-${cat.id}`}
+                        href={`/${storeConfig.slug}/categories/${cat.slug}`}
                         className={cn(
-                          "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 rounded-2xl shadow-2xl border backdrop-blur-2xl z-50",
-                          isDarkTheme ? "bg-black/90 border-white/10" : "bg-white/95 border-gray-100"
+                          "px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-all rounded-full flex items-center gap-2 group/nav whitespace-nowrap",
+                          isDarkTheme
+                            ? "text-gray-400 hover:text-white hover:bg-white/10"
+                            : "text-gray-600 hover:text-black hover:bg-gray-100"
                         )}
                       >
-                        <div className="grid gap-1">
-                          {parentCategories.map((cat) => (
-                            <Link
-                              key={cat.id}
-                              href={`/${storeConfig.slug}/categories/${cat.slug}`}
+                        {cat.name}
+                      </Link>
+                    ))}
+
+                    {/* Catalogue/More Dropdown for Overflow Categories */}
+                    {overflowCategories.length > 0 && (
+                      <div
+                        className="relative group"
+                        onMouseEnter={() => setIsCatalogueOpen(true)}
+                        onMouseLeave={() => setIsCatalogueOpen(false)}
+                      >
+                        <button
+                          className={cn(
+                            "px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.12em] transition-all rounded-full flex items-center gap-2 group/nav whitespace-nowrap",
+                            isDarkTheme
+                              ? "text-gray-400 hover:text-white hover:bg-white/10"
+                              : "text-gray-600 hover:text-black hover:bg-gray-100"
+                          )}
+                        >
+                          {categoriesToDisplay.length > 0 ? "More" : "Catalogue"}
+                          <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", isCatalogueOpen && "rotate-180")} />
+                        </button>
+
+                        <AnimatePresence>
+                          {isCatalogueOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                              transition={{ duration: 0.2 }}
                               className={cn(
-                                "flex items-center justify-between px-4 py-3 rounded-xl transition-all group/item",
-                                isDarkTheme ? "hover:bg-white/5" : "hover:bg-gray-50"
+                                "absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 p-3 rounded-2xl shadow-2xl border backdrop-blur-2xl z-50",
+                                isDarkTheme ? "bg-black/90 border-white/10" : "bg-white/95 border-gray-100"
                               )}
-                              onClick={() => setIsCatalogueOpen(false)}
                             >
-                              <span className={cn(
-                                "text-sm font-medium",
-                                isDarkTheme ? "text-gray-300 group-hover/item:text-white" : "text-gray-600 group-hover/item:text-black"
-                              )}>
-                                {cat.name}
-                              </span>
-                              <ChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all text-gray-400" />
-                            </Link>
-                          ))}
-                        </div>
-                      </motion.div>
+                              <div className="grid gap-1 overflow-y-auto max-h-[70vh]">
+                                {overflowCategories.map((cat) => (
+                                  <Link
+                                    key={`cat-overflow-${cat.id}`}
+                                    href={`/${storeConfig.slug}/categories/${cat.slug}`}
+                                    className={cn(
+                                      "flex items-center justify-between px-4 py-3 rounded-xl transition-all group/item",
+                                      isDarkTheme ? "hover:bg-white/5" : "hover:bg-gray-50"
+                                    )}
+                                    onClick={() => setIsCatalogueOpen(false)}
+                                  >
+                                    <span className={cn(
+                                      "text-sm font-medium",
+                                      isDarkTheme ? "text-gray-300 group-hover/item:text-white" : "text-gray-600 group-hover/item:text-black"
+                                    )}>
+                                      {cat.name}
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover/item:opacity-100 group-hover/item:translate-x-0 transition-all text-gray-400" />
+                                  </Link>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     )}
-                  </AnimatePresence>
-                </div>
-              )}
+                  </>
+                );
+              })()}
             </nav>
 
             {/* Right Actions */}
             <div className="flex items-center gap-1 sm:gap-2 z-20">
-              
+
               {/* Search Toggle */}
               <Button
                 variant="ghost"
@@ -262,11 +298,11 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                 </Link>
               ) : (
                 <Link href={`/auth/login?callbackUrl=/${storeConfig.slug}`} className="ml-1 hidden sm:block">
-                  <Button 
-                    className="h-10 px-6 rounded-full font-bold text-xs uppercase tracking-widest transition-all shadow-md hover:shadow-lg active:scale-95" 
+                  <Button
+                    className="h-10 px-6 rounded-full font-bold text-xs uppercase tracking-widest transition-all shadow-md hover:shadow-lg active:scale-95"
                     style={{ backgroundColor: primaryColor, color: 'white' }}
                   >
-                    Log In
+                    {storeConfig.headerConfig?.loginButtonText || 'Log In'}
                   </Button>
                 </Link>
               )}
@@ -305,7 +341,7 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Search products, categories, guides..."
+                  placeholder={storeConfig.headerConfig?.searchPlaceholder || "Search products, categories, guides..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={cn(
@@ -335,19 +371,19 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                   </Button>
                 </div>
               </div>
-              
+
               {/* Search Suggestions Area */}
               <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-12">
                 <div className="space-y-6">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Quick Links</h4>
                   <div className="flex flex-wrap gap-2">
                     {['Courses', 'Mentorship', 'Free Guides', 'Memberships', 'Contact'].map((tag) => (
-                      <button 
+                      <button
                         key={tag}
                         className={cn(
                           "px-4 py-2 rounded-full text-sm border transition-all",
-                          isDarkTheme 
-                            ? "border-white/10 hover:border-white text-gray-400 hover:text-white" 
+                          isDarkTheme
+                            ? "border-white/10 hover:border-white text-gray-400 hover:text-white"
                             : "border-gray-200 hover:border-black text-gray-600 hover:text-black"
                         )}
                       >
@@ -360,8 +396,8 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Popular Categories</h4>
                   <div className="grid gap-3">
                     {parentCategories.map((cat) => (
-                      <Link 
-                        key={cat.id} 
+                      <Link
+                        key={cat.id}
                         href={`/${storeConfig.slug}/categories/${cat.slug}`}
                         className="flex items-center gap-3 group"
                         onClick={() => setSearchOpen(false)}
@@ -384,14 +420,14 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
       <AnimatePresence>
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-[100] lg:hidden">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-md" 
-              onClick={() => setMobileMenuOpen(false)} 
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              onClick={() => setMobileMenuOpen(false)}
             />
-            <motion.nav 
+            <motion.nav
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -407,10 +443,9 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                   <X className="h-6 w-6" />
                 </Button>
               </div>
-              
+
               <div className="flex flex-col gap-8">
                 {storeConfig.navigation.main.map((item, i) => {
-                  const Icon = (item as any).icon ? ((item as any).icon === 'BookOpen' ? BookOpen : (item as any).icon === 'GraduationCap' ? GraduationCap : (item as any).icon === 'Info' ? Info : getNavIcon(item.label)) : getNavIcon(item.label);
                   return (
                     <Link
                       key={i}
@@ -418,7 +453,6 @@ export function StoreHeader({ storeConfig, cartItemCount = 0 }: StoreHeaderProps
                       className="text-3xl font-bold tracking-tight hover:opacity-50 transition-opacity flex items-center gap-4"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {Icon && <Icon className="w-8 h-8 text-gray-400" />}
                       {item.label}
                     </Link>
                   );

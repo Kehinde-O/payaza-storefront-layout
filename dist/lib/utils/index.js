@@ -126,6 +126,9 @@ export function getUserFriendlyErrorMessage(error, defaultMessage = 'Something w
  * If isActive/status are undefined (mock data), includes the product for backward compatibility
  */
 export function filterActiveProducts(products) {
+    if (!products || !Array.isArray(products)) {
+        return [];
+    }
     return products.filter((product) => {
         // If isActive is explicitly false, exclude
         if (product.isActive === false) {
@@ -139,12 +142,10 @@ export function filterActiveProducts(products) {
         return true;
     });
 }
-/**
- * Filters out inactive or deleted services
- * Excludes services where isActive === false OR status === 'inactive' OR status === 'draft'
- * If isActive/status are undefined (mock data), includes the service for backward compatibility
- */
 export function filterActiveServices(services) {
+    if (!services || !Array.isArray(services)) {
+        return [];
+    }
     return services.filter((service) => {
         // If isActive is explicitly false, exclude
         if (service.isActive === false) {
@@ -157,4 +158,60 @@ export function filterActiveServices(services) {
         // Include if isActive is true, status is 'active', or both are undefined (backward compatibility)
         return true;
     });
+}
+/**
+ * Deep clones an object using structuredClone if available, or a fallback recursive clone.
+ * This is more efficient and handles more types than JSON.parse(JSON.stringify).
+ */
+export function deepClone(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+    if (typeof structuredClone === 'function') {
+        try {
+            return structuredClone(obj);
+        }
+        catch (e) {
+            // Fallback if structuredClone fails (e.g. for some non-serializable objects)
+        }
+    }
+    // Fallback recursive clone
+    if (Array.isArray(obj)) {
+        const copy = [];
+        for (let i = 0; i < obj.length; i++) {
+            copy[i] = deepClone(obj[i]);
+        }
+        return copy;
+    }
+    const copy = {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            copy[key] = deepClone(obj[key]);
+        }
+    }
+    return copy;
+}
+/**
+ * Checks if two objects are deeply equal without using JSON.stringify.
+ * Optimized for performance by doing early exits and avoiding stringification.
+ */
+export function isDeepEqual(obj1, obj2) {
+    if (obj1 === obj2)
+        return true;
+    if (typeof obj1 !== 'object' ||
+        obj1 === null ||
+        typeof obj2 !== 'object' ||
+        obj2 === null) {
+        return false;
+    }
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    if (keys1.length !== keys2.length)
+        return false;
+    for (const key of keys1) {
+        if (!keys2.includes(key) || !isDeepEqual(obj1[key], obj2[key])) {
+            return false;
+        }
+    }
+    return true;
 }

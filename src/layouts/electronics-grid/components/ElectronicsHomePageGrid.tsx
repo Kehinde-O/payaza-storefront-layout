@@ -13,8 +13,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { formatCurrency, cn, filterActiveProducts } from '@/lib/utils';
-import { getLayoutText, getBannerImage, getLogoUrl } from '../../../lib/utils/asset-helpers';
-import { StoreLogo } from '../../../components/ui/store-logos';
+import { getLayoutText, getBannerImage, getLogoUrl } from '@/lib/utils/asset-helpers';
+import { StoreLogo } from '@/components/ui/store-logos';
 import { PromoBanner } from '../../shared/components/PromoBanner';
 
 import { ElectronicsGridProductCard } from './ElectronicsGridProductCard';
@@ -100,12 +100,41 @@ const ElectronicsFilterContent = ({ categories, storeSlug }: { categories: Store
    </div>
 );
 
-export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGridProps) {
+export function ElectronicsHomePageGrid({ storeConfig: initialConfig }: ElectronicsHomePageGridProps) {
+   const { store, cart, addToCart, updateCartQuantity, isCartOpen, setIsCartOpen, cartTotal, cartCount, wishlist } = useStore();
+   const storeConfig = store || initialConfig;
+   
    const layoutConfig = storeConfig.layoutConfig;
-   const categories = storeConfig.categories || [];
-   const products = filterActiveProducts(storeConfig.products || []);
+   
+   // In preview mode, use mock data if none are available
+   const isPreview = (typeof window !== 'undefined' && (window as any).__IS_PREVIEW__) || storeConfig.layoutConfig?.isPreview;
 
-   const { cart, addToCart, updateCartQuantity, isCartOpen, setIsCartOpen, cartTotal, cartCount, wishlist } = useStore();
+   const categories = (storeConfig.categories && storeConfig.categories.length > 0)
+     ? storeConfig.categories
+     : (isPreview ? [
+       { id: 'cat1', name: 'iPhone', slug: 'iphone', image: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=800' },
+       { id: 'cat2', name: 'MacBook', slug: 'macbook', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800' },
+       { id: 'cat3', name: 'iPad', slug: 'ipad', image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=800' },
+       { id: 'cat4', name: 'Accessories', slug: 'accessories', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800' }
+     ] : []);
+
+   const rawProducts = storeConfig.products || [];
+   const activeProducts = filterActiveProducts(rawProducts);
+   
+   // Use real active products if available, otherwise if in preview, use all products (including drafts), 
+   // and if still none, use mock data
+   const products = activeProducts.length > 0 
+     ? activeProducts 
+     : (isPreview && rawProducts.length > 0 
+         ? rawProducts 
+         : (isPreview ? [
+             { id: 'p1', name: 'iPhone 15 Pro', price: 999, currency: 'USD', images: ['https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=800'], slug: 'iphone-15-pro', rating: 4.9, reviewCount: 1240, description: 'The ultimate iPhone.', categoryId: 'cat1', inStock: true },
+             { id: 'p2', name: 'MacBook Air M2', price: 1199, currency: 'USD', images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=800'], slug: 'macbook-air-m2', rating: 4.8, reviewCount: 850, description: 'Supercharged by M2.', categoryId: 'cat2', inStock: true },
+             { id: 'p3', name: 'iPad Pro 12.9"', price: 1099, currency: 'USD', images: ['https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=800'], slug: 'ipad-pro', rating: 4.9, reviewCount: 620, description: 'The ultimate iPad experience.', categoryId: 'cat3', inStock: true },
+             { id: 'p4', name: 'AirPods Pro 2', price: 249, currency: 'USD', images: ['https://images.unsplash.com/photo-1588423771073-b8903fbb85b5?q=80&w=800'], slug: 'airpods-pro', rating: 4.7, reviewCount: 2100, description: 'Magic like you’ve never heard.', categoryId: 'cat4', inStock: true }
+           ] : []));
+
+
    const wishlistCount = wishlist.length;
    const [searchQuery, setSearchQuery] = useState('');
    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -148,8 +177,10 @@ export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGrid
 
          {/* Main Header - Clean Apple Style */}
          <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-            <div className="container mx-auto px-4 md:px-6 h-16 flex items-center gap-8">
-
+            <div
+               data-section="header"
+               className="container mx-auto px-4 md:px-6 h-16 flex items-center gap-8"
+            >
                {/* Logo */}
                <Link href={`/${storeConfig.slug}`} className="flex flex-col leading-none shrink-0 group">
                   {/* Show logo if available, otherwise show store name */}
@@ -162,7 +193,7 @@ export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGrid
                   ) : (
                      <>
                         <span className="text-xl font-medium tracking-tight text-gray-900 group-hover:text-gray-600 transition-colors">{storeConfig.name}</span>
-                        <span className="text-[9px] font-normal tracking-wide text-gray-400 mt-0.5">Premium Apple Products</span>
+                        <span className="text-[9px] font-normal tracking-wide text-gray-400 mt-0.5">{layoutConfig?.sections?.header?.subtitle || 'Premium Apple Products'}</span>
                      </>
                   )}
                </Link>
@@ -333,7 +364,10 @@ export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGrid
                         `/${storeConfig.slug}/products`;
 
                      return (
-                        <div className="mb-8 rounded-lg bg-white text-gray-900 py-12 px-6 flex items-center justify-between relative overflow-hidden min-h-[200px]">
+                        <div
+                           data-section="marketing"
+                           className="mb-8 rounded-lg bg-white text-gray-900 py-12 px-6 flex items-center justify-between relative overflow-hidden min-h-[200px]"
+                        >
                            {/* Background Image */}
                            <div className="absolute inset-0 z-0">
                               <Image
@@ -392,7 +426,10 @@ export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGrid
                   </Sheet>
 
                   {/* The Grid - Spacious */}
-                  <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <div
+                     data-section="products"
+                     className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3"
+                  >
                      {filteredProducts.slice(0, visibleCount).map((product, index) => (
                         // Grid View Card - High Density Info
                         <ElectronicsGridProductCard
@@ -422,7 +459,10 @@ export function ElectronicsHomePageGrid({ storeConfig }: ElectronicsHomePageGrid
          </main>
 
          {/* Footer - Clean Apple Style */}
-         <footer className="bg-white border-t border-gray-100 pt-16 pb-12 mt-20">
+         <footer
+            data-section="footer"
+            className="bg-white border-t border-gray-100 pt-16 pb-12 mt-20"
+         >
             <div className="container mx-auto px-6">
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-12">
                   <div className="lg:col-span-1">

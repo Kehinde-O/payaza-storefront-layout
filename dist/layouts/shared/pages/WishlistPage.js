@@ -9,8 +9,6 @@ import { ImageWithFallback } from '../../../components/ui/image-with-fallback';
 import { useToast } from '../../../components/ui/toast';
 import { ProductGridSkeleton } from '../../../components/ui/skeletons';
 import { formatCurrency } from '../../../lib/utils';
-import { wishlistService } from '../../../lib/services/wishlist.service';
-import { transformProductToStoreProduct } from '../../../lib/store-config-utils';
 import { useAuth } from '../../../lib/auth-context';
 import { shouldUseAPI } from '../../../lib/utils/demo-detection';
 import { useLoading } from '../../../lib/loading-context';
@@ -38,22 +36,9 @@ export function WishlistPage({ storeConfig }) {
                 startBackendLoading();
             }
             try {
-                if (useAPI && isAuthenticated) {
-                    // Fetch from API - items include product data
-                    const apiWishlist = await wishlistService.getWishlist();
-                    if (apiWishlist && apiWishlist.length > 0) {
-                        const itemsWithProducts = apiWishlist
-                            .filter((item) => item.product) // Only items with product data
-                            .map((item) => transformProductToStoreProduct(item.product));
-                        // Deduplicate items by product ID to prevent duplicates
-                        const uniqueItems = itemsWithProducts.filter((item, index, self) => index === self.findIndex((t) => t.id === item.id));
-                        setWishlistItems(uniqueItems);
-                    }
-                    else {
-                        setWishlistItems([]);
-                    }
-                }
-                else {
+                // Note: wishlistService removed - using StoreContext wishlist (localStorage-based)
+                // Use products from storeConfig filtered by wishlist product IDs
+                if (storeConfig.products) {
                     // For guests or demo stores, filter from storeConfig.products
                     const allProducts = storeConfig.products || [];
                     const allMenuItems = storeConfig.menuItems || [];

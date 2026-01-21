@@ -28,10 +28,15 @@ export declare function getUserFriendlyErrorMessage(error: any, defaultMessage?:
  * If isActive/status are undefined (mock data), includes the product for backward compatibility
  */
 export declare function filterActiveProducts(products: StoreProduct[]): StoreProduct[];
-/**
- * Filters out inactive or deleted services
- * Excludes services where isActive === false OR status === 'inactive' OR status === 'draft'
- * If isActive/status are undefined (mock data), includes the service for backward compatibility
- */
 export declare function filterActiveServices(services: StoreService[]): StoreService[];
+/**
+ * Deep clones an object using structuredClone if available, or a fallback recursive clone.
+ * This is more efficient and handles more types than JSON.parse(JSON.stringify).
+ */
+export declare function deepClone<T>(obj: T): T;
+/**
+ * Checks if two objects are deeply equal without using JSON.stringify.
+ * Optimized for performance by doing early exits and avoiding stringification.
+ */
+export declare function isDeepEqual(obj1: any, obj2: any): boolean;
 //# sourceMappingURL=index.d.ts.map

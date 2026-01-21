@@ -1,1 +1,1 @@
-{"version":3,"file":"store-config.d.ts","sourceRoot":"","sources":["../../src/lib/store-config.ts"],"names":[],"mappings":"AACA,OAAO,EAAE,cAAc,EAAE,YAAY,EAAE,gBAAgB,EAAE,MAAM,eAAe,CAAC;AAC/E,YAAY,EAAE,WAAW,EAAE,MAAM,eAAe,CAAC"}
+{"version":3,"file":"store-config.d.ts","sourceRoot":"","sources":["../../src/lib/store-config.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,cAAc,EAAE,YAAY,EAAE,gBAAgB,EAAE,MAAM,eAAe,CAAC;AAC/E,OAAO,EAAE,cAAc,EAAE,YAAY,EAAE,gBAAgB,EAAE,CAAC;AAC1D,YAAY,EAAE,WAAW,EAAE,MAAM,eAAe,CAAC"}

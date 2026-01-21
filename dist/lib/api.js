@@ -69,6 +69,14 @@ api.interceptors.response.use((response) => {
     }
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !originalRequest._retry) {
+        // Check if we're in preview mode - skip ALL auth operations to prevent session invalidation
+        const isPreview = typeof window !== 'undefined' && window.__IS_PREVIEW__;
+        if (isPreview) {
+            // In preview mode, never attempt token refresh, clear tokens, or redirect
+            // This prevents interfering with the parent window's session (storefront-admin)
+            console.warn('[API] 401 Unauthorized in preview mode - skipping all auth operations (refresh, clear, redirect)');
+            return Promise.reject(error);
+        }
         originalRequest._retry = true;
         try {
             const refreshToken = localStorage.getItem('refreshToken');
@@ -89,11 +97,15 @@ api.interceptors.response.use((response) => {
         }
         catch (refreshError) {
             // Refresh failed, clear tokens and redirect to login
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            localStorage.removeItem('storefront_user');
-            if (typeof window !== 'undefined') {
-                window.location.href = '/auth/login';
+            // But only if NOT in preview mode (double check for safety)
+            const isPreviewCheck = typeof window !== 'undefined' && window.__IS_PREVIEW__;
+            if (!isPreviewCheck) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('storefront_user');
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/auth/login';
+                }
             }
             return Promise.reject(refreshError);
         }

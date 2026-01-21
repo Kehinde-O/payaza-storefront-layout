@@ -150,9 +150,10 @@ function ReviewCard({ review }: { review: ProductReview }) {
 }
 
 export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPageProps) {
+  const { addToCart, isCartLoading, toggleWishlist, isInWishlist, isWishlistLoading, setBuyNowItem } = useStore();
+
   const products = filterActiveProducts(storeConfig.products || []);
   const product = products.find(p => p.slug === productSlug);
-  const { addToCart, isCartLoading, toggleWishlist, isInWishlist, isWishlistLoading, setBuyNowItem } = useStore();
   const { addToast } = useToast();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
@@ -227,7 +228,8 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
   useEffect(() => {
     if (product && product.images && product.images.length > 0 && selectedImage >= product.images.length) {
       // Use setTimeout to avoid synchronous setState in effect
-      setTimeout(() => setSelectedImage(0), 0);
+      const timer = setTimeout(() => setSelectedImage(0), 0);
+      return () => clearTimeout(timer);
     }
   }, [product, selectedImage]);
   const [selectedColor, setSelectedColor] = useState<string | null>(
@@ -681,7 +683,7 @@ export function ProductDetailPage({ storeConfig, productSlug }: ProductDetailPag
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
                 {(() => {
-                  const brandMatch = product.name.match(/\b(Reebok|Nike|Adidas|Puma|New Balance|Vans|Converse)\b/i);
+                  const brandMatch = product.name.match(/\b(Sony|Samsung|Apple|LG|Dell|HP|Microsoft|Logitech|Razer|Corsair|Asus|Acer|Lenovo)\b/i);
                   return brandMatch ? brandMatch[1] : storeConfig.name;
                 })()}
               </span>

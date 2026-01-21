@@ -9,7 +9,10 @@ import { useState } from 'react';
 import { useToast } from '../../../components/ui/toast';
 import { getLayoutText, getThemeColor, getLogoUrl } from '../../../lib/utils/asset-helpers';
 import { StoreLogo } from '../../../components/ui/store-logos';
-export function StoreFooter({ storeConfig }) {
+import { useStore } from '../../../lib/store-context';
+export function StoreFooter({ storeConfig: initialConfig }) {
+    const { store } = useStore();
+    const storeConfig = store || initialConfig;
     const currentYear = new Date().getFullYear();
     const primaryColor = storeConfig.branding.primaryColor || '#000000';
     const isDarkTheme = storeConfig.branding.theme === 'dark';
@@ -42,7 +45,7 @@ export function StoreFooter({ storeConfig }) {
     const footerBg = isDarkTheme
         ? `linear-gradient(to bottom, ${bgDark}CC, ${bgSecondary}, ${bgDark})`
         : bgPrimary;
-    return (_jsxs("footer", { className: cn("relative border-t overflow-hidden backdrop-blur-xl"), style: {
+    return (_jsxs("footer", { "data-section": "footer", className: cn("relative border-t overflow-hidden backdrop-blur-xl"), style: {
             background: footerBg,
             borderTopColor: borderPrimary,
             borderTopWidth: '1px',

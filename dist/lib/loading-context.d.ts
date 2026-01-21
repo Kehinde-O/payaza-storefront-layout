@@ -11,6 +11,7 @@ interface LoadingContextType {
     startBackendLoading: () => void;
     stopBackendLoading: () => void;
 }
+export declare const LoadingContext: import("react").Context<LoadingContextType>;
 export declare function LoadingProvider({ children }: {
     children: React.ReactNode;
 }): import("react/jsx-runtime").JSX.Element;

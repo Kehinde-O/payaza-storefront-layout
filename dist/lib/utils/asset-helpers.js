@@ -1,4 +1,5 @@
 import { shouldUseAPI } from './demo-detection';
+export { shouldUseAPI };
 function normalizeAssetUrl(url) {
     if (typeof url !== 'string')
         return null;
@@ -8,6 +9,49 @@ function normalizeAssetUrl(url) {
     // Basic sanity guard: avoid obvious non-urls like "undefined"/"null"
     if (trimmed === 'undefined' || trimmed === 'null')
         return null;
+    return trimmed;
+}
+/**
+ * Normalizes store image URLs to absolute URLs
+ * Handles both absolute URLs (R2/Cloudflare/etc.) and relative paths
+ * @param raw - The raw image URL (can be relative or absolute)
+ * @returns Normalized absolute URL or null if invalid
+ */
+export function normalizeStoreImageUrl(raw) {
+    // Handle null, undefined, or non-string values
+    if (raw === null || raw === undefined)
+        return null;
+    if (typeof raw !== 'string')
+        return null;
+    const trimmed = raw.trim();
+    if (!trimmed)
+        return null;
+    if (trimmed === 'undefined' || trimmed === 'null' || trimmed === '')
+        return null;
+    // Absolute URLs (R2/Cloudflare/etc.) - return as-is
+    if (/^https?:\/\//i.test(trimmed)) {
+        return trimmed;
+    }
+    // Backend-served uploads (relative path)
+    // Try to get API base URL from environment or use default
+    const apiBase = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL
+        ? process.env.NEXT_PUBLIC_API_URL
+        : (typeof window !== 'undefined'
+            ? window.location.origin.replace(/:\d+$/, ':4002') // Try to infer from current origin
+            : 'http://localhost:4002');
+    // Handle paths starting with /uploads/
+    if (trimmed.startsWith('/uploads/')) {
+        return `${apiBase}${trimmed}`;
+    }
+    // Handle paths starting with uploads/ (no leading slash)
+    if (trimmed.startsWith('uploads/')) {
+        return `${apiBase}/${trimmed}`;
+    }
+    // Handle paths starting with / (other backend paths)
+    if (trimmed.startsWith('/')) {
+        return `${apiBase}${trimmed}`;
+    }
+    // As a last resort, return as-is (could already be a resolvable relative asset)
     return trimmed;
 }
 function pickFirstAssetUrl(...candidates) {
@@ -29,12 +73,13 @@ export function getTextContent(storeConfig, textKey, fallbackText) {
     if (!storeConfig) {
         return fallbackText;
     }
-    const isRealStore = shouldUseAPI(storeConfig.slug);
-    // For demo stores, always use fallback
-    if (!isRealStore) {
-        return fallbackText;
+    // 1. Try to get text from new text hierarchy first
+    if (storeConfig.layoutConfig?.text) {
+        const value = getLayoutText(storeConfig, textKey, '');
+        if (value)
+            return value;
     }
-    // For real stores, try to get text from backend
+    // 2. Try to get text from assignedText (legacy)
     const assignedText = storeConfig.layoutConfig?.assignedText;
     if (assignedText && typeof assignedText === 'object') {
         const textValue = assignedText[textKey];
@@ -42,7 +87,7 @@ export function getTextContent(storeConfig, textKey, fallbackText) {
             return textValue.trim();
         }
     }
-    // If text not found, return fallback
+    // 3. Fallback to default
     return fallbackText;
 }
 /**
@@ -57,18 +102,11 @@ export function getFeaturesList(storeConfig, textKeyPrefix, fallbackFeatures) {
     if (!storeConfig) {
         return fallbackFeatures;
     }
-    const isRealStore = shouldUseAPI(storeConfig.slug);
-    // For demo stores, always use fallback
-    if (!isRealStore) {
-        return fallbackFeatures;
-    }
-    // Try new structured text system first (e.g., sections.team.features)
-    // Extract section name from prefix (e.g., 'team_feature_' -> 'team')
+    // 1. Try new structured text system first (e.g., sections.team.features)
     const sectionMatch = textKeyPrefix.match(/^(\w+)_feature_/);
     if (sectionMatch && storeConfig.layoutConfig?.text) {
         const sectionName = sectionMatch[1];
         const textConfig = storeConfig.layoutConfig.text;
-        // Try to get features from sections.{sectionName}.features array
         if (textConfig.sections &&
             typeof textConfig.sections === 'object' &&
             sectionName in textConfig.sections) {
@@ -76,7 +114,6 @@ export function getFeaturesList(storeConfig, textKeyPrefix, fallbackFeatures) {
             if (section && typeof section === 'object' && 'features' in section) {
                 const features = section.features;
                 if (Array.isArray(features) && features.length > 0) {
-                    // Filter out empty strings and return valid features
                     const validFeatures = features
                         .filter((f) => typeof f === 'string' && f.trim())
                         .map((f) => f.trim());
@@ -87,13 +124,12 @@ export function getFeaturesList(storeConfig, textKeyPrefix, fallbackFeatures) {
             }
         }
     }
-    // Fallback to legacy assignedText system
+    // 2. Fallback to legacy assignedText system
     const assignedText = storeConfig.layoutConfig?.assignedText;
     if (assignedText && typeof assignedText === 'object') {
         const features = [];
         let index = 1;
-        // Try to get features sequentially (feature_1, feature_2, etc.)
-        while (index <= 10) { // Limit to 10 features max
+        while (index <= 10) {
             const featureKey = `${textKeyPrefix}${index}`;
             const featureValue = assignedText[featureKey];
             if (featureValue && typeof featureValue === 'string' && featureValue.trim()) {
@@ -101,15 +137,18 @@ export function getFeaturesList(storeConfig, textKeyPrefix, fallbackFeatures) {
                 index++;
             }
             else {
-                break; // Stop when we hit a missing feature
+                break;
             }
         }
-        // If we found at least one feature, return them
         if (features.length > 0) {
             return features;
         }
     }
-    // If no features found, return fallback
+    // 3. Check for benefit strip style items if textKeyPrefix matches
+    const featuresSection = storeConfig.layoutConfig?.sections?.features;
+    if (textKeyPrefix === 'features_item_' && featuresSection?.items && Array.isArray(featuresSection.items)) {
+        return featuresSection.items.map((item) => item.title || item.text || '').filter(Boolean);
+    }
     return fallbackFeatures;
 }
 /**
@@ -123,17 +162,21 @@ export function getAssetUrl(storeConfig, assetKey, fallbackUrl) {
     if (!storeConfig) {
         return fallbackUrl;
     }
-    const isRealStore = shouldUseAPI(storeConfig.slug);
-    // For demo stores, always use fallback
-    if (!isRealStore) {
-        return fallbackUrl;
-    }
-    // For real stores, try to get asset from backend
+    // 1. Try to get asset from layoutConfig.assignedAssets
     const assignedAsset = storeConfig.layoutConfig?.assignedAssets?.[assetKey];
     if (assignedAsset && typeof assignedAsset === 'string' && assignedAsset.trim()) {
         return assignedAsset.trim();
     }
-    // If asset not found in assignedAssets, return fallback
+    // 2. Try to get asset from nested sections (common pattern)
+    const sections = storeConfig.layoutConfig?.sections;
+    if (sections) {
+        // Try to find image in any section that might have it
+        for (const section of Object.values(sections)) {
+            if (section && typeof section === 'object' && section.image === assetKey) {
+                return section.image;
+            }
+        }
+    }
     return fallbackUrl;
 }
 /**
@@ -148,7 +191,6 @@ export function getBannerImage(storeConfig, assetKey, fallbackUrl) {
     if (!storeConfig) {
         return fallbackUrl;
     }
-    const isRealStore = shouldUseAPI(storeConfig.slug);
     // Check multiple sources (supports both legacy assignedAssets and newer sections shapes)
     const assignedAssets = storeConfig.layoutConfig?.assignedAssets;
     // 1) Explicit key (expected: 'hero_bg')
@@ -160,18 +202,18 @@ export function getBannerImage(storeConfig, assetKey, fallbackUrl) {
     if (alternates)
         return alternates;
     // 3) sections.hero shape (multi-slide heroes often store images in slides)
-    const heroSection = storeConfig.layoutConfig?.sections?.hero;
+    const heroSection = storeConfig.layoutConfig?.sections?.hero || storeConfig.layoutConfig?.hero;
     if (heroSection) {
         const sectionHeroUrl = pickFirstAssetUrl(heroSection.backgroundImage, heroSection.image, heroSection.bannerImage, heroSection.heroImage, heroSection.bg, heroSection.background, heroSection.media?.image, heroSection.media?.src, heroSection.slides?.[0]?.image, heroSection.slides?.[0]?.backgroundImage, heroSection.slides?.[0]?.bannerImage);
         if (sectionHeroUrl)
             return sectionHeroUrl;
     }
-    // 4) Store-level banner if present (not in StoreConfig type, but may exist at runtime)
+    // 4) Store-level banner if present
     const storeBanner = pickFirstAssetUrl(storeConfig?.banner);
     if (storeBanner)
         return storeBanner;
     // 5) Fallback if nothing found
-    return isRealStore ? '' : fallbackUrl;
+    return fallbackUrl;
 }
 /**
  * Gets a team member image from backend
@@ -234,36 +276,54 @@ export function getServiceImage(serviceImage, storeConfig, fallbackUrl) {
  * @returns Text content string
  */
 export function getLayoutText(storeConfig, path, fallbackText) {
-    if (!storeConfig || !storeConfig.layoutConfig?.text) {
+    if (!storeConfig || !storeConfig.layoutConfig) {
         return fallbackText;
     }
-    const isRealStore = shouldUseAPI(storeConfig.slug);
-    // For demo stores, always use fallback
-    if (!isRealStore) {
-        return fallbackText;
+    // 1. Try to get text from layoutConfig.text hierarchy using dot notation path
+    if (storeConfig.layoutConfig.text) {
+        const textConfig = storeConfig.layoutConfig.text;
+        const pathParts = path.split('.');
+        // Navigate through the path
+        let current = textConfig;
+        let found = true;
+        for (const part of pathParts) {
+            if (current && typeof current === 'object' && part in current) {
+                current = current[part];
+            }
+            else {
+                found = false;
+                break;
+            }
+        }
+        if (found && typeof current === 'string' && current.trim()) {
+            return current.trim();
+        }
     }
-    const textConfig = storeConfig.layoutConfig.text;
+    // 2. Try to get text from sections hierarchy (common for many layouts)
+    // e.g. path 'sections.categories.title' -> layoutConfig.sections.categories.title
     const pathParts = path.split('.');
-    // Navigate through the path
-    let current = textConfig;
-    for (const part of pathParts) {
-        if (current && typeof current === 'object' && part in current) {
-            current = current[part];
+    if (pathParts.length > 0) {
+        let current = storeConfig.layoutConfig;
+        let found = true;
+        for (const part of pathParts) {
+            if (current && typeof current === 'object' && part in current) {
+                current = current[part];
+            }
+            else {
+                found = false;
+                break;
+            }
         }
-        else {
-            return fallbackText;
+        if (found && typeof current === 'string' && current.trim()) {
+            return current.trim();
         }
     }
-    // If we found a string value, return it
-    if (typeof current === 'string' && current.trim()) {
-        return current.trim();
-    }
-    // If not found, try common fallback for common UI labels
-    if (pathParts.length > 1 && pathParts[0] !== 'common') {
-        const commonPath = `common.${pathParts[pathParts.length - 1]}`;
-        const commonValue = getLayoutText(storeConfig, commonPath, '');
-        if (commonValue) {
-            return commonValue;
+    // 3. Try to get from assignedText (legacy)
+    const assignedText = storeConfig.layoutConfig.assignedText;
+    if (assignedText && typeof assignedText === 'object') {
+        const textValue = assignedText[path];
+        if (textValue && typeof textValue === 'string' && textValue.trim()) {
+            return textValue.trim();
         }
     }
     return fallbackText;

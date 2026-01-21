@@ -2,6 +2,6 @@ import { StoreConfig } from '../../../lib/store-types';
 interface FoodHomePageProps {
     storeConfig: StoreConfig;
 }
-export declare function FoodHomePage({ storeConfig }: FoodHomePageProps): import("react/jsx-runtime").JSX.Element;
+export declare function FoodHomePage({ storeConfig: initialConfig }: FoodHomePageProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=FoodHomePage.d.ts.map

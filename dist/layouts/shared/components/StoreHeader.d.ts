@@ -3,6 +3,6 @@ interface StoreHeaderProps {
     storeConfig: StoreConfig;
     cartItemCount?: number;
 }
-export declare function StoreHeader({ storeConfig, cartItemCount }: StoreHeaderProps): import("react/jsx-runtime").JSX.Element;
+export declare function StoreHeader({ storeConfig: initialConfig, cartItemCount }: StoreHeaderProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=StoreHeader.d.ts.map

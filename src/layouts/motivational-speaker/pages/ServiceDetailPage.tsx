@@ -10,11 +10,11 @@ import { useToast } from '@/components/ui/toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Image from 'next/image';
-import { formatCurrency, filterActiveServices } from '../../../lib/utils';
-import { getServiceImage, getTextContent } from '../../../lib/utils/asset-helpers';
+import { formatCurrency, filterActiveServices } from '@/lib/utils';
+import { getServiceImage, getTextContent } from '@/lib/utils/asset-helpers';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { cn } from '../../../lib/utils';
+import { cn } from '@/lib/utils';
 
 interface ServiceDetailPageProps {
   storeConfig: StoreConfig;
@@ -105,13 +105,13 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
 
   const handleWishlistClick = async () => {
     if (isWishlistLoading) return;
-
+    
     try {
       const wasInWishlist = isInWishlist(service.id);
       await toggleWishlist(service.id);
       addToast(
-        wasInWishlist
-          ? `${service.name} removed from wishlist`
+        wasInWishlist 
+          ? `${service.name} removed from wishlist` 
           : `${service.name} added to wishlist`,
         'success'
       );
@@ -159,10 +159,10 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
               {isPlaying && hasAccess ? (
                 <div className="absolute inset-0 bg-black flex items-center justify-center">
                   {service.contentType === 'video' ? (
-                    <video
-                      src={service.contentUrl}
-                      controls
-                      autoPlay
+                    <video 
+                      src={service.contentUrl} 
+                      controls 
+                      autoPlay 
                       className="w-full h-full object-contain"
                       poster={getServiceImage(service.image, storeConfig, "")}
                     >
@@ -185,8 +185,8 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Resource Ready</h3>
                       <p className="text-gray-500 mb-8 text-center max-w-sm">You have access to this premium guide. Download it below to start reading.</p>
-                      <a
-                        href={service.contentUrl}
+                      <a 
+                        href={service.contentUrl} 
                         target="_blank"
                         rel="noopener noreferrer"
                         className="bg-black text-white px-10 py-4 rounded-full font-bold hover:bg-gray-800 transition-all flex items-center gap-3 shadow-xl"
@@ -195,7 +195,7 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
                       </a>
                     </div>
                   )}
-                  <button
+                  <button 
                     onClick={() => setIsPlaying(false)}
                     className="absolute top-6 right-6 bg-black/40 hover:bg-black/60 p-3 rounded-full backdrop-blur-md transition-all border border-white/10 group/close"
                     title="Close player"
@@ -213,7 +213,7 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
                     unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
+                  
                   {/* Play/Access Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     {hasAccess ? (
@@ -237,7 +237,7 @@ export function ServiceDetailPage({ storeConfig, serviceSlug }: ServiceDetailPag
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">Premium Content</h3>
                         <p className="text-gray-300 text-sm mb-6">This {typeLabel.toLowerCase()} is exclusive to members. Unlock it now to start learning.</p>
-                        <Button
+                        <Button 
                           onClick={handleAddToCart}
                           className="bg-white text-black hover:bg-gray-200 rounded-full px-8 h-14 font-bold text-base w-full shadow-2xl"
                         >

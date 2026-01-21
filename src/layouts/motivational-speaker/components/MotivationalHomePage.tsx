@@ -2,23 +2,52 @@
 
 import { StoreConfig } from '@/lib/store-types';
 import { Button } from '@/components/ui/button';
-import { Play, FileText, Headphones, ArrowRight, Lock, Star, CheckCircle, Smartphone, Globe, Mail, ChevronDown, Quote, Youtube, Instagram, Twitter, Facebook, Award, Users, BookOpen, Zap } from 'lucide-react';
+import { Play, FileText, Headphones, ArrowRight, Lock, Star, CheckCircle, Mail, ChevronDown, Quote, Youtube, Instagram, Twitter } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatCurrency, filterActiveServices } from '../../../lib/utils';
-import { getBannerImage, getServiceImage, getTextContent } from '../../../lib/utils/asset-helpers';
+import { formatCurrency, filterActiveServices } from '@/lib/utils';
+import { getBannerImage, getServiceImage, getTextContent } from '@/lib/utils/asset-helpers';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef, useState } from 'react';
-import { useAuth } from '../../../lib/auth-context';
+import { useRef, useState, useContext } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { useStore } from '@/lib/store-context';
+import { AlertModalContext } from '@/components/ui/alert-modal';
 
 interface MotivationalHomePageProps {
     storeConfig: StoreConfig;
 }
 
-export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps) {
+export function MotivationalHomePage({ storeConfig: initialConfig }: MotivationalHomePageProps) {
+    const { store } = useStore();
+    const storeConfig = store || initialConfig;
+
     const { isAuthenticated } = useAuth();
-    const contentItems = filterActiveServices(storeConfig.services || []);
-    const primaryColor = storeConfig.branding.primaryColor || '#0F172A';
+    
+    // Safely get alert modal context with fallback
+    const alertContext = useContext(AlertModalContext);
+    const showAlert = alertContext?.showAlert || ((message: string, type?: 'success' | 'error' | 'info' | 'warning', options?: any) => {
+        // Fallback: log to console if provider is not available
+        console.log(`[Alert] ${type || 'info'}: ${message}`, options);
+    });
+
+    // In preview mode, use mock content if none are available
+    const isPreview = (typeof window !== 'undefined' && (window as any).__IS_PREVIEW__) || storeConfig.layoutConfig?.isPreview;
+
+    const rawContent = storeConfig.services || [];
+    const activeContent = filterActiveServices(rawContent);
+
+    // Use real active content if available, otherwise if in preview, use all content (including drafts), 
+    // and if still none, use mock data
+    const contentItems = activeContent.length > 0
+        ? activeContent
+        : (isPreview && rawContent.length > 0
+            ? rawContent
+            : (isPreview ? [
+                { id: 'mock-1', name: 'Peak Performance Mindset', description: 'Master your internal state and achieve unstoppable focus in any situation.', price: 199, currency: 'USD', status: 'active', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800', slug: 'peak-performance', contentType: 'video' },
+                { id: 'mock-2', name: 'Strategic Resilience', description: 'Build the emotional and mental strength to navigate complex challenges with ease.', price: 149, currency: 'USD', status: 'active', image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800', slug: 'strategic-resilience', contentType: 'audio' },
+                { id: 'mock-3', name: 'Leadership Blueprint', description: 'The comprehensive guide to leading with impact, authenticity, and clear vision.', price: 0, currency: 'USD', status: 'active', image: 'https://images.unsplash.com/photo-1475721027785-f74ec0f711b1?w=800', slug: 'leadership-blueprint', contentType: 'pdf' }
+            ] : []));
+
     const layoutConfig = storeConfig.layoutConfig;
     const [email, setEmail] = useState('');
     const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -39,7 +68,8 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
     const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
 
     // FAQ Data
-    const faqItems = [
+    const backendFaqItems = layoutConfig?.sections?.faq?.items;
+    const fallbackFaqItems = [
         {
             question: "How do I access my purchased courses?",
             answer: "Once you purchase a course, you'll receive instant access via email. You can also access all your courses from your account dashboard under 'My Learning'."
@@ -62,11 +92,17 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
         }
     ];
 
+    const faqItems = backendFaqItems && backendFaqItems.length > 0 ? backendFaqItems : fallbackFaqItems;
+
     const handleSubscribe = (e: React.FormEvent) => {
         e.preventDefault();
         if (email) {
             // In a real app, this would call an API
-            alert('Thank you for subscribing! Check your email for confirmation.');
+            showAlert(
+                'Thank you for subscribing to our newsletter! Please check your email inbox to confirm your subscription.',
+                'success',
+                { title: 'Subscription Successful' }
+            );
             setEmail('');
         }
     };
@@ -76,9 +112,13 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
     };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-gray-900 selection:bg-black selection:text-white">
+        <div className="bg-white font-sans text-gray-900 selection:bg-black selection:text-white">
             {/* HERO SECTION: Cinematic & Full Height with Parallax */}
-            <section ref={heroRef} className="relative h-screen min-h-[800px] flex items-center justify-center overflow-hidden bg-black">
+            <section
+                data-section="hero"
+                ref={heroRef}
+                className="relative h-screen min-h-[800px] flex items-center justify-center overflow-hidden bg-black"
+            >
                 <div className="absolute inset-0 z-0">
                     {heroVideo ? (
                         <video
@@ -120,7 +160,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                             transition={{ delay: 0.2, duration: 0.6 }}
                             className="inline-block py-1.5 px-4 border border-white/30 rounded-full text-sm font-medium tracking-widest uppercase backdrop-blur-md bg-white/5"
                         >
-                            {getTextContent(storeConfig, 'hero_subtitle', 'Master Your Mindset')}
+                            {layoutConfig?.sections?.hero?.subtitle || getTextContent(storeConfig, 'hero_subtitle', 'Master Your Mindset')}
                         </motion.span>
                         <motion.h1
                             initial={{ opacity: 0, y: 20 }}
@@ -128,7 +168,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                             transition={{ delay: 0.3, duration: 0.8 }}
                             className="text-6xl md:text-8xl font-serif font-medium tracking-tight leading-tight"
                         >
-                            {getTextContent(storeConfig, 'hero_title', 'Unlock Your True Potential')}
+                            {layoutConfig?.sections?.hero?.title || getTextContent(storeConfig, 'hero_title', 'Unlock Your True Potential')}
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
@@ -136,7 +176,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                             transition={{ delay: 0.5, duration: 0.8 }}
                             className="text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto font-light leading-relaxed"
                         >
-                            {storeConfig.description || "Join thousands of students learning to master their mindset and achieve their dreams."}
+                            {layoutConfig?.sections?.hero?.description || storeConfig.description || "Join thousands of students learning to master their mindset and achieve their dreams."}
                         </motion.p>
 
                         <motion.div
@@ -150,7 +190,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                                     size="lg"
                                     className="h-16 px-12 rounded-full text-lg font-medium bg-white text-black hover:bg-gray-200 transition-all transform hover:-translate-y-1 hover:shadow-2xl"
                                 >
-                                    {isAuthenticated ? 'Continue Learning' : getTextContent(storeConfig, 'cta_primary', 'Start Learning Now')}
+                                    {isAuthenticated ? 'Continue Learning' : (layoutConfig?.sections?.hero?.primaryCTA || getTextContent(storeConfig, 'cta_primary', 'Start Learning Now'))}
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
@@ -160,7 +200,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                                     variant="outline"
                                     className="h-16 px-12 rounded-full text-lg font-medium border-2 border-white/40 text-white hover:bg-white hover:text-black hover:border-white transition-all backdrop-blur-sm"
                                 >
-                                    Explore Catalogue
+                                    {layoutConfig?.sections?.hero?.secondaryCTA || 'Explore Catalogue'}
                                     <ArrowRight className="ml-2 h-5 w-5" />
                                 </Button>
                             </Link>
@@ -184,7 +224,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             </section>
 
             {/* TRUST SECTION: "As Seen In" Ticker with Fixed Logos */}
-            <section className="py-20 border-y border-gray-100 bg-white overflow-hidden">
+            <section
+                data-section="trust"
+                className="py-20 border-y border-gray-100 bg-white overflow-hidden"
+            >
                 <div className="container mx-auto px-6 mb-10">
                     <p className="text-center text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">Trusted by Global Institutions</p>
                 </div>
@@ -221,7 +264,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             </section>
 
             {/* BIO SECTION: Editorial Style with Animation */}
-            <section className="py-32 bg-white">
+            <section
+                data-section="about"
+                className="py-32 bg-white"
+            >
                 <div className="container mx-auto px-6 max-w-7xl">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
                         <motion.div
@@ -255,11 +301,11 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                             className="lg:col-span-6 space-y-10"
                         >
                             <h2 className="text-4xl md:text-6xl font-serif text-gray-900 leading-tight">
-                                {getTextContent(storeConfig, 'bio_title', "Hi, I'm here to help you grow.")}
+                                {layoutConfig?.sections?.about?.title || getTextContent(storeConfig, 'bio_title', "Hi, I'm here to help you grow.")}
                             </h2>
                             <div className="space-y-6 text-xl text-gray-600 font-light leading-relaxed">
                                 <p>
-                                    {getTextContent(storeConfig, 'bio_desc', "I have dedicated my life to helping individuals break through their barriers. My courses are designed to give you practical tools for everyday success.")}
+                                    {layoutConfig?.sections?.about?.description || getTextContent(storeConfig, 'bio_desc', "I have dedicated my life to helping individuals break through their barriers. My courses are designed to give you practical tools for everyday success.")}
                                 </p>
                             </div>
 
@@ -302,7 +348,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             </section>
 
             {/* CONTENT GRID: Premium Cards with Hover Effects */}
-            <section className="py-32 bg-gray-50">
+            <section
+                data-section="services"
+                className="py-32 bg-gray-50"
+            >
                 <div className="container mx-auto px-6 max-w-7xl">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -313,10 +362,12 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                     >
                         <div>
                             <span className="text-gray-400 font-bold tracking-widest uppercase text-xs mb-4 block">Catalogue</span>
-                            <h2 className="text-4xl md:text-5xl font-serif text-gray-900">Latest Materials</h2>
+                            <h2 className="text-4xl md:text-5xl font-serif text-gray-900">
+                                {layoutConfig?.sections?.services?.title || 'Latest Materials'}
+                            </h2>
                         </div>
                         <Link href={`/${storeConfig.slug}/services`} className="group flex items-center gap-3 text-lg font-medium hover:text-gray-600 transition-colors">
-                            View All Material <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            {layoutConfig?.sections?.services?.viewAllLabel || 'View All Material'} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </motion.div>
 
@@ -401,7 +452,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             </section>
 
             {/* SUBSCRIPTION BANNER: Dark & Gold Premium */}
-            <section className="relative py-32 bg-[#0a0a0a] text-white overflow-hidden">
+            <section
+                data-section="subscription"
+                className="relative py-32 bg-[#0a0a0a] text-white overflow-hidden"
+            >
                 {/* Abstract BG */}
                 <div className="absolute inset-0 opacity-20">
                     <Image
@@ -423,13 +477,13 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                             transition={{ duration: 0.8 }}
                         >
                             <span className="text-yellow-500 font-bold tracking-widest uppercase text-xs mb-6 block">
-                                Inner Circle Access
+                                {layoutConfig?.sections?.marketing?.subscriptionBadge || 'Inner Circle Access'}
                             </span>
                             <h2 className="text-5xl md:text-7xl font-serif mb-8 leading-none">
-                                {getTextContent(storeConfig, 'sub_title', 'Join the Movement')}
+                                {layoutConfig?.sections?.marketing?.subscriptionTitle || getTextContent(storeConfig, 'sub_title', 'Join the Movement')}
                             </h2>
                             <p className="text-xl text-gray-400 mb-12 font-light leading-relaxed max-w-lg">
-                                {getTextContent(storeConfig, 'sub_desc', 'Get unlimited access to all courses, exclusive live sessions, and a community of like-minded individuals.')}
+                                {layoutConfig?.sections?.marketing?.subscriptionDescription || getTextContent(storeConfig, 'sub_desc', 'Get unlimited access to all courses, exclusive live sessions, and a community of like-minded individuals.')}
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-6">
@@ -438,7 +492,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                                         size="lg"
                                         className="h-16 px-12 rounded-full text-lg font-bold bg-yellow-500 text-black hover:bg-yellow-400 border-0 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
                                     >
-                                        {getTextContent(storeConfig, 'sub_cta', 'Become a Member')}
+                                        {layoutConfig?.sections?.marketing?.subscriptionButton || getTextContent(storeConfig, 'sub_cta', 'Become a Member')}
                                         <ArrowRight className="ml-2 h-5 w-5" />
                                     </Button>
                                 </Link>
@@ -482,7 +536,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
 
             {/* TESTIMONIALS */}
             {layoutConfig?.sections?.testimonials?.show !== false && (
-                <section className="py-32 bg-white">
+                <section
+                    data-section="testimonials"
+                    className="py-32 bg-white"
+                >
                     <div className="container mx-auto px-6 max-w-7xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -503,7 +560,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                                     { id: '3', name: 'David Lee', role: 'Developer', quote: "Simple, practical, and effective. Highly recommend.", rating: 5, image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop', order: 3 },
                                 ];
                                 const testimonials = backendTestimonials.length > 0 ? backendTestimonials : fallbackTestimonials;
-                                return testimonials.slice(0, 3).map((testimonial, index) => (
+                                return testimonials.slice(0, 3).map((testimonial: any, index: number) => (
                                     <motion.div
                                         key={testimonial.id || testimonial.name}
                                         initial={{ opacity: 0, y: 30 }}
@@ -533,7 +590,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             )}
 
             {/* NEWSLETTER SECTION */}
-            <section className="py-24 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white relative overflow-hidden">
+            <section
+                data-section="marketing"
+                className="py-24 bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white relative overflow-hidden"
+            >
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-500 rounded-full blur-3xl" />
                     <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl" />
@@ -548,18 +608,20 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold uppercase tracking-widest">
                             <Mail className="w-3 h-3" />
-                            Stay Connected
+                            {layoutConfig?.sections?.marketing?.newsletterBadge || 'Stay Connected'}
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-serif">Join Our Newsletter</h2>
+                        <h2 className="text-4xl md:text-5xl font-serif">
+                            {layoutConfig?.sections?.marketing?.newsletterTitle || 'Join Our Newsletter'}
+                        </h2>
                         <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light">
-                            Get weekly insights, exclusive content, and early access to new courses delivered straight to your inbox.
+                            {layoutConfig?.sections?.marketing?.newsletterSubtitle || 'Get weekly insights, exclusive content, and early access to new courses delivered straight to your inbox.'}
                         </p>
                         <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Enter your email"
+                                placeholder={layoutConfig?.sections?.marketing?.newsletterPlaceholder || 'Enter your email'}
                                 required
                                 className="flex-1 px-6 py-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                             />
@@ -568,7 +630,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                                 size="lg"
                                 className="h-14 px-8 rounded-full bg-yellow-500 text-black hover:bg-yellow-400 font-bold text-lg transition-all transform hover:-translate-y-1 hover:shadow-xl"
                             >
-                                Subscribe
+                                {layoutConfig?.sections?.marketing?.newsletterButton || 'Subscribe'}
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                         </form>
@@ -580,7 +642,10 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
             </section>
 
             {/* FAQ SECTION */}
-            <section className="py-32 bg-white">
+            <section
+                data-section="faq"
+                className="py-32 bg-white"
+            >
                 <div className="container mx-auto px-6 max-w-4xl">
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
@@ -597,7 +662,7 @@ export function MotivationalHomePage({ storeConfig }: MotivationalHomePageProps)
                     </motion.div>
 
                     <div className="space-y-4">
-                        {faqItems.map((faq, index) => (
+                        {faqItems.map((faq: any, index: number) => (
                             <motion.div
                                 key={index}
                                 initial={{ opacity: 0, y: 20 }}

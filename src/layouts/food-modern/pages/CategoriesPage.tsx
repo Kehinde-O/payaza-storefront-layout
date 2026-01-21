@@ -5,6 +5,11 @@ import Link from 'next/link';
 import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import { ArrowRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { useStore } from '@/lib/store-context';
+
+interface CategoriesPageProps {
+  storeConfig: StoreConfig;
+}
 
 interface CategoriesPageProps {
   storeConfig: StoreConfig;
@@ -107,7 +112,10 @@ function getGridContainerClass(totalCount: number): string {
   return 'grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]';
 }
 
-export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
+export function CategoriesPage({ storeConfig: initialConfig }: CategoriesPageProps) {
+  const { store } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const categories = storeConfig.categories || [];
   
   // Breadcrumbs
@@ -126,11 +134,11 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
                   <Breadcrumbs items={breadcrumbItems} />
                 </div>
                 <h1 className="text-4xl lg:text-5xl font-bold tracking-tight text-gray-900 mb-6">
-                  Shop by Category
+                  Our Menu Categories
                 </h1>
                 <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
-                  Explore our comprehensive collection of premium products across various departments. 
-                  Dive into our curated selections designed to match your style and needs.
+                  Explore our diverse menu offerings. From appetizers to desserts, 
+                  we have something delicious for every craving.
                 </p>
              </div>
           </div>
@@ -190,7 +198,7 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
             <Link
               key={category.id}
               data-category-card
-                     href={`/${storeConfig.slug}/products?category=${category.slug}`}
+                     href={`/${storeConfig.slug}/menu/${category.slug}`}
                      className={`group relative overflow-hidden rounded-2xl bg-gray-100 border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-500 min-h-[300px] ${spanClass}`}
                    >
                      {/* Background Image */}
@@ -214,7 +222,7 @@ export function CategoriesPage({ storeConfig }: CategoriesPageProps) {
                               </p>
                   )}
                            <div className="flex items-center gap-2 text-white font-medium text-sm tracking-wide uppercase">
-                              <span className="border-b border-transparent group-hover:border-white transition-colors">Explore Collection</span>
+                              <span className="border-b border-transparent group-hover:border-white transition-colors">View Menu</span>
                               <ArrowRight className="w-4 h-4 transform transition-transform group-hover:translate-x-1" />
                            </div>
                         </div>

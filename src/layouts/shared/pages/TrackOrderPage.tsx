@@ -5,7 +5,8 @@ import { Search, Package, Truck, CheckCircle, Clock, MapPin, AlertCircle, Loader
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { orderService } from '@/lib/services/order.service';
+// Note: orderService removed - this page is shared and not editable in the editor
+// Order tracking functionality not available in preview mode
 import { useToast } from '@/components/ui/toast';
 import { useLoading } from '@/lib/loading-context';
 
@@ -41,8 +42,9 @@ export function TrackOrderPage({ storeConfig }: TrackOrderPageProps) {
         startBackendLoading();
 
         try {
-          const orderData = await orderService.trackOrder(orderNumberFromUrl);
-          processOrderData(orderData);
+          // Note: orderService removed - order tracking not available in preview mode
+          setError('Order tracking is not available in preview mode. This feature requires the order service.');
+          setOrderStatus(null);
         } catch (error: any) {
           handleTrackingError(error);
         } finally {
@@ -57,11 +59,15 @@ export function TrackOrderPage({ storeConfig }: TrackOrderPageProps) {
 
   // Auto-scroll to results when orderStatus is populated
   useEffect(() => {
+    let timer: NodeJS.Timeout;
     if (orderStatus && resultsRef.current) {
-      setTimeout(() => {
+      timer = setTimeout(() => {
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [orderStatus]);
 
   const processOrderData = (orderData: any) => {
@@ -271,12 +277,9 @@ export function TrackOrderPage({ storeConfig }: TrackOrderPageProps) {
     startBackendLoading();
 
     try {
-      // Use tracking number if provided, otherwise use order number
-      const orderData = await orderService.trackOrder(
-        trackingNumber || orderId,
-        email
-      );
-      processOrderData(orderData);
+      // Note: orderService removed - order tracking not available in preview mode
+      setError('Order tracking is not available in preview mode. This feature requires the order service.');
+      setOrderStatus(null);
 
     } catch (error: any) {
       handleTrackingError(error);

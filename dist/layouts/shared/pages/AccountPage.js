@@ -10,16 +10,18 @@ import { AvatarImage } from '../../../components/ui/avatar-image';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/auth-context';
 import { cn, formatCurrency } from '../../../lib/utils';
-import { orderService } from '../../../lib/services/order.service';
+// Note: orderService and wishlistService removed - these pages are shared and not editable in the editor
+// Using StoreContext for wishlist functionality instead
 import { bookingService } from '../../../lib/services/booking.service';
-import { wishlistService } from '../../../lib/services/wishlist.service';
 import { customerService } from '../../../lib/services/customer.service';
+import { useStore } from '../../../lib/store-context';
 import { useToast } from '../../../components/ui/toast';
 import { useLoading } from '../../../lib/loading-context';
 import { MentorshipProgress } from '../../../components/learning/MentorshipProgress';
 import { CertificateCard } from '../../../components/learning/CertificateTemplates';
 export function AccountPage({ storeConfig }) {
     const { user, isAuthenticated, isLoading, logout, updateUserState } = useAuth();
+    const { wishlist, toggleWishlist } = useStore();
     const searchParams = useSearchParams();
     const router = useRouter();
     const { addToast } = useToast();
@@ -115,15 +117,9 @@ export function AccountPage({ storeConfig }) {
                 setIsLoadingData(true);
                 startBackendLoading();
                 try {
-                    // Fetch orders
-                    try {
-                        const ordersData = await orderService.getOrders();
-                        setOrders(ordersData);
-                    }
-                    catch (error) {
-                        console.error('Failed to fetch orders:', error);
-                        setOrders([]);
-                    }
+                    // Note: orderService removed - orders not available in editor preview
+                    // In production, orders would be fetched from the backend API
+                    setOrders([]);
                     // Fetch bookings
                     try {
                         const bookingsData = await bookingService.getBookings();
@@ -133,13 +129,18 @@ export function AccountPage({ storeConfig }) {
                         console.error('Failed to fetch bookings:', error);
                         setBookings([]);
                     }
-                    // Fetch wishlist
-                    try {
-                        const wishlistData = await wishlistService.getWishlist();
-                        setWishlistItems(wishlistData);
+                    // Use wishlist from StoreContext (localStorage-based)
+                    // Note: wishlistService removed - using StoreContext instead
+                    if (wishlist && storeConfig?.products) {
+                        const items = wishlist
+                            .map(productId => {
+                            const product = storeConfig.products?.find(p => p.id === productId);
+                            return product ? { id: productId, productId, product } : null;
+                        })
+                            .filter((item) => item !== null);
+                        setWishlistItems(items);
                     }
-                    catch (error) {
-                        console.error('Failed to fetch wishlist:', error);
+                    else {
                         setWishlistItems([]);
                     }
                 }
@@ -527,11 +528,19 @@ export function AccountPage({ storeConfig }) {
                                                     const storeSlug = product?.storeSlug || storeConfig?.slug;
                                                     return (_jsxs("div", { className: "group border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all relative bg-white", children: [_jsx("button", { className: "absolute top-4 right-4 z-10 p-2 bg-white/80 backdrop-blur rounded-full text-red-500 hover:bg-red-50 transition-colors", onClick: async () => {
                                                                     try {
-                                                                        await wishlistService.removeFromWishlist(item.id);
+                                                                        // Use StoreContext toggleWishlist (localStorage-based)
+                                                                        await toggleWishlist(item.productId);
                                                                         addToast('Removed from wishlist', 'success');
-                                                                        // Refresh wishlist
-                                                                        const updatedWishlist = await wishlistService.getWishlist();
-                                                                        setWishlistItems(updatedWishlist);
+                                                                        // Refresh wishlist from StoreContext
+                                                                        if (wishlist && storeConfig?.products) {
+                                                                            const items = wishlist
+                                                                                .map(productId => {
+                                                                                const product = storeConfig.products?.find(p => p.id === productId);
+                                                                                return product ? { id: productId, productId, product } : null;
+                                                                            })
+                                                                                .filter((item) => item !== null);
+                                                                            setWishlistItems(items);
+                                                                        }
                                                                     }
                                                                     catch (error) {
                                                                         const errorMessage = error instanceof Error ? error.message : 'Failed to remove from wishlist';

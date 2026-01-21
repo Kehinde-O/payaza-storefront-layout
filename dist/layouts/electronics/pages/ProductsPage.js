@@ -18,7 +18,9 @@ import { formatCurrency, filterActiveProducts } from '../../../lib/utils';
 import { getAllCategoryIds, flattenCategoryTree, buildCategoryTree } from '../../../lib/utils/category-tree';
 import { getBannerImage, getLayoutText } from '../../../lib/utils/asset-helpers';
 import { shouldUseAPI } from '../../../lib/utils/demo-detection';
-function ProductsPageContent({ storeConfig }) {
+function ProductsPageContent({ storeConfig: initialConfig }) {
+    const { store, addToCart } = useStore();
+    const storeConfig = store || initialConfig;
     const searchParams = useSearchParams();
     const categoryParam = searchParams.get('category');
     const [products, setProducts] = useState(() => {
@@ -85,7 +87,6 @@ function ProductsPageContent({ storeConfig }) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storeConfig.products, storeConfig.id]); // Removed isLoadingProducts from deps to prevent infinite loops
-    const { addToCart } = useStore();
     const { addToast } = useToast();
     const { startBackendLoading, stopBackendLoading } = useLoading();
     const { trackEvent } = useAnalytics();

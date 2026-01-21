@@ -9,12 +9,12 @@ interface VideoPlayerProps {
    * Video URL - can be YouTube, Vimeo, Instagram, TikTok, or direct video file
    */
   src: string;
-  
+
   /**
    * Poster image URL (for direct video files)
    */
   poster?: string;
-  
+
   /**
    * Video context - determines behavior
    * - 'background': Autoplay, muted, loop, no controls (for hero backgrounds)
@@ -22,37 +22,37 @@ interface VideoPlayerProps {
    * - 'inline': Standard video player with controls
    */
   context?: 'background' | 'embedded' | 'inline';
-  
+
   /**
    * Whether to autoplay (only applies to embedded/inline contexts)
    */
   autoplay?: boolean;
-  
+
   /**
    * Whether to show controls (only applies to embedded/inline contexts)
    */
   controls?: boolean;
-  
+
   /**
    * Whether to loop the video
    */
   loop?: boolean;
-  
+
   /**
    * Whether video is muted
    */
   muted?: boolean;
-  
+
   /**
    * Additional CSS classes
    */
   className?: string;
-  
+
   /**
    * Aspect ratio for embedded videos (e.g., '16/9', '4/3')
    */
   aspectRatio?: string;
-  
+
   /**
    * Callback when video fails to load
    */
@@ -96,12 +96,27 @@ export function VideoPlayer({
 
   // Background video context - use iframe for YouTube/Vimeo, video tag for direct
   if (context === 'background') {
-    if (!videoInfo) return null;
+    // Helper to render poster fallback
+    const renderFallback = () => {
+      if (poster) {
+        return (
+          <img
+            src={poster}
+            alt="Hero Background"
+            className={cn('absolute inset-0 w-full h-full object-cover', className)}
+          />
+        );
+      }
+      return null;
+    };
+
+    if (hasError) return renderFallback();
+    if (!videoInfo) return renderFallback();
 
     // YouTube or Vimeo - use iframe
     if (videoInfo.platform === 'youtube' || videoInfo.platform === 'vimeo') {
       const embedUrl = getBackgroundVideoEmbedUrl(src);
-      if (!embedUrl) return null;
+      if (!embedUrl) return renderFallback();
 
       return (
         <iframe
@@ -110,7 +125,7 @@ export function VideoPlayer({
           className={cn('absolute inset-0 w-full h-full', className)}
           allow="autoplay; encrypted-media"
           allowFullScreen
-          style={{ border: 'none' }}
+          style={{ border: 'none', pointerEvents: 'none' }}
           title="Background video"
         />
       );
@@ -133,13 +148,8 @@ export function VideoPlayer({
       );
     }
 
-    // Instagram/TikTok - not ideal for background, but try to render
-    if (videoInfo.platform === 'instagram' || videoInfo.platform === 'tiktok') {
-      // For these platforms, we might want to show a placeholder or fallback
-      return null;
-    }
-
-    return null;
+    // Instagram/TikTok or unknown - not supported for background, use fallback
+    return renderFallback();
   }
 
   // Embedded context - use iframe with controls
@@ -151,7 +161,7 @@ export function VideoPlayer({
 
     // YouTube or Vimeo - use iframe
     if (videoInfo.platform === 'youtube' || videoInfo.platform === 'vimeo') {
-      const aspectRatioStyle = aspectRatio 
+      const aspectRatioStyle = aspectRatio
         ? { aspectRatio: aspectRatio.replace('-', '/') }
         : { aspectRatio: '16/9' };
 
@@ -191,7 +201,7 @@ export function VideoPlayer({
 
     // Instagram/TikTok - use embed iframe
     if (videoInfo.platform === 'instagram' && videoInfo.embedUrl) {
-      const aspectRatioStyle = aspectRatio 
+      const aspectRatioStyle = aspectRatio
         ? { aspectRatio: aspectRatio.replace('-', '/') }
         : { aspectRatio: '1/1' };
 
@@ -223,7 +233,7 @@ export function VideoPlayer({
       const embedUrl = getEmbedVideoUrl(src, autoplay);
       if (!embedUrl) return null;
 
-      const aspectRatioStyle = aspectRatio 
+      const aspectRatioStyle = aspectRatio
         ? { aspectRatio: aspectRatio.replace('-', '/') }
         : { aspectRatio: '16/9' };
 

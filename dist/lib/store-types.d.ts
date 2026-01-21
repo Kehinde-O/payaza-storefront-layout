@@ -165,14 +165,26 @@ export interface StorySection {
     description?: string;
     image?: string;
     signature?: string;
+    quote?: string;
+    author?: string;
+    badge?: string;
+    section_title?: string;
+    chef_name?: string;
+    chef_bio?: string;
 }
 export interface PromoBannerSection {
     show: boolean;
     image?: string;
     title?: string;
     subtitle?: string;
+    button?: {
+        text: string;
+        link: string;
+    };
     buttonText?: string;
     buttonLink?: string;
+    badge?: string;
+    description?: string;
 }
 export interface TestimonialsSection {
     show: boolean;
@@ -260,6 +272,16 @@ export interface StoreConfig {
     };
     layoutConfig?: StoreLayoutConfig;
     puckData?: Record<string, any>;
+    isPreview?: boolean;
+    headerConfig?: {
+        show?: boolean;
+        loginButtonText?: string;
+        signUpButtonText?: string;
+        accountButtonText?: string;
+        cartButtonText?: string;
+        wishlistButtonText?: string;
+        searchPlaceholder?: string;
+    };
 }
 export interface HeroSlider {
     id: string;
@@ -278,7 +300,14 @@ export interface HeroSlider {
     };
     order: number;
 }
+export interface BenefitItem {
+    title: string;
+    description: string;
+    icon?: string;
+    order: number;
+}
 export interface StoreLayoutConfig {
+    isPreview?: boolean;
     hero?: {
         show: boolean;
         showCTA?: boolean;
@@ -286,12 +315,22 @@ export interface StoreLayoutConfig {
         autoPlay?: boolean;
         showBadges?: boolean;
         sliders?: HeroSlider[];
+        badge?: string;
+        title?: string;
+        subtitle?: string;
+        description?: string;
+        primaryCTA?: string;
+        secondaryCTA?: string;
     };
     features?: {
         show: boolean;
         showIcons?: boolean;
+        title?: string;
+        description?: string;
+        items?: BenefitItem[];
     };
     sections?: {
+        [key: string]: any;
         hero?: {
             show?: boolean;
             autoPlay?: boolean;
@@ -299,6 +338,13 @@ export interface StoreLayoutConfig {
             showSecondaryCTA?: boolean;
             showBadges?: boolean;
             sliders?: HeroSlider[];
+            badge?: string;
+            title?: string;
+            titleHighlight?: string;
+            subtitle?: string;
+            description?: string;
+            primaryCTA?: string;
+            secondaryCTA?: string;
         };
         categories?: {
             show: boolean;
@@ -307,6 +353,7 @@ export interface StoreLayoutConfig {
             title?: string;
             subtitle?: string;
             viewAll?: string;
+            viewAllLabel?: string;
         };
         featuredProducts?: {
             show: boolean;
@@ -314,15 +361,32 @@ export interface StoreLayoutConfig {
             subtitle?: string;
             showViewAll?: boolean;
             viewAll?: string;
+            viewAllLabel?: string;
             showAddToCart?: boolean;
             showWishlist?: boolean;
             showRatings?: boolean;
             emptyState?: string;
+            eyebrow?: string;
         };
         marketing?: {
             show: boolean;
             showNewsletter?: boolean;
             showPromoBanner?: boolean;
+            newsletterTitle?: string;
+            newsletterSubtitle?: string;
+            newsletterButton?: string;
+            newsletterPlaceholder?: string;
+            newsletterBadge?: string;
+            subscriptionTitle?: string;
+            subscriptionSubtitle?: string;
+            subscriptionButton?: string;
+            subscriptionBadge?: string;
+            subscriptionDescription?: string;
+            backgroundImage?: string;
+            badge?: string;
+            title?: string;
+            subtitle?: string;
+            promoDiscount?: string;
             editorial?: {
                 show?: boolean;
                 label?: string;
@@ -334,6 +398,15 @@ export interface StoreLayoutConfig {
                 primaryButtonLink?: string;
                 secondaryButtonText?: string;
                 secondaryButtonLink?: string;
+                badgeText?: string;
+                primaryButton?: {
+                    text: string;
+                    link: string;
+                };
+                secondaryButton?: {
+                    text: string;
+                    link: string;
+                };
             };
             promoBanner?: {
                 show?: boolean;
@@ -350,7 +423,11 @@ export interface StoreLayoutConfig {
                 button?: string;
                 placeholder?: string;
                 disclaimer?: string;
+                badge?: string;
             };
+            ctaTitle?: string;
+            ctaDescription?: string;
+            ctaButton?: string;
             shopTheLook?: {
                 show?: boolean;
                 image?: string;
@@ -400,8 +477,12 @@ export interface StoreLayoutConfig {
             show: boolean;
             title?: string;
             description?: string;
+            subtitle?: string;
             showViewAll?: boolean;
             viewAll?: string;
+            viewAllLabel?: string;
+            memberName?: string;
+            memberRole?: string;
         };
         services?: {
             show: boolean;
@@ -410,10 +491,53 @@ export interface StoreLayoutConfig {
             showViewAll?: boolean;
             viewAll?: string;
             limit?: number;
+            viewAllLabel?: string;
         };
         map?: {
             show: boolean;
             title?: string;
+        };
+        about?: {
+            show: boolean;
+            title?: string;
+            description?: string;
+            image?: string;
+            detailImage?: string;
+            label?: string;
+            primaryButtonText?: string;
+            primaryButtonLink?: string;
+            secondaryButtonText?: string;
+            secondaryButtonLink?: string;
+            quote?: string;
+            author?: string;
+            badge?: string;
+            section_title?: string;
+            chef_name?: string;
+            chef_bio?: string;
+            showStats?: boolean;
+            stat1Label?: string;
+            stat1Value?: string;
+            stat2Label?: string;
+            stat2Value?: string;
+            buttonText?: string;
+            buttonLink?: string;
+        };
+        trust?: {
+            show: boolean;
+            title?: string;
+        };
+        faq?: {
+            show: boolean;
+            title?: string;
+            items?: any[];
+        };
+        subscription?: {
+            show: boolean;
+            title?: string;
+            subtitle?: string;
+            description?: string;
+            buttonText?: string;
+            badge?: string;
         };
     };
     pages?: {
@@ -426,6 +550,15 @@ export interface StoreLayoutConfig {
                 image: string;
                 caption?: string;
             }>;
+            hero?: any;
+            story?: any;
+            stats?: any;
+            'contact-info'?: any;
+            values?: any;
+            aboutHeader?: any;
+            aboutContent?: any;
+            statsSection?: any;
+            contactSection?: any;
         };
         team?: {
             title?: string;
@@ -463,6 +596,46 @@ export interface StoreLayoutConfig {
                 question: string;
                 answer: string;
             }>;
+        };
+        products?: {
+            productsHeader?: any;
+            productsGrid?: any;
+        };
+        categories?: {
+            categoriesHeader?: any;
+            categoryGrid?: any;
+        };
+        categoryDetail?: {
+            categoryDetail?: any;
+            showServices?: boolean;
+            showProducts?: boolean;
+            showBanner?: boolean;
+            showDescription?: boolean;
+            showFilters?: boolean;
+        };
+        productDetail?: {
+            productDetail?: any;
+            showSizeGuide?: boolean;
+            showAddToCart?: boolean;
+            showWishlist?: boolean;
+            showReviews?: boolean;
+            showRelatedProducts?: boolean;
+        };
+        contact?: {
+            contact?: any;
+            contactHeader?: any;
+            contactForm?: any;
+            hero?: any;
+            form?: any;
+            backgroundImage?: string;
+            title?: string;
+            subtitle?: string;
+            infoTitle?: string;
+            infoDescription?: string;
+        };
+        menu?: {
+            menuHeader?: any;
+            menuGrid?: any;
         };
     };
     text?: {

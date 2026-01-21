@@ -1,7 +1,7 @@
 'use client';
 
 import { StoreConfig } from '@/lib/store-types';
-import { ElectronicsGridCategoriesPage } from './ElectronicsGridCategoriesPage';
+import { ElectronicsGridCategoriesPage } from '../../electronics-grid/pages/ElectronicsGridCategoriesPage';
 
 interface CategoriesPageProps {
   storeConfig: StoreConfig;

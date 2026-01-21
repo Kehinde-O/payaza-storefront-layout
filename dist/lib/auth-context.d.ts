@@ -22,6 +22,7 @@ interface AuthContextType {
     updateProfile: (data: Partial<User>) => Promise<void>;
     updateUserState: (user: User) => void;
 }
+export declare const AuthContext: React.Context<AuthContextType>;
 export declare function AuthProvider({ children }: {
     children: React.ReactNode;
 }): import("react/jsx-runtime").JSX.Element;

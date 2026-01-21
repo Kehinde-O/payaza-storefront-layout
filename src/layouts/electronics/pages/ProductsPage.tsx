@@ -27,7 +27,10 @@ interface ProductsPageProps {
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest' | 'rating';
 
-function ProductsPageContent({ storeConfig }: ProductsPageProps) {
+function ProductsPageContent({ storeConfig: initialConfig }: ProductsPageProps) {
+  const { store, addToCart } = useStore();
+  const storeConfig = store || initialConfig;
+  
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category');
   const [products, setProducts] = useState<StoreProduct[]>(() => {
@@ -93,7 +96,6 @@ function ProductsPageContent({ storeConfig }: ProductsPageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeConfig.products, storeConfig.id]); // Removed isLoadingProducts from deps to prevent infinite loops
   
-  const { addToCart } = useStore();
   const { addToast } = useToast();
   const { startBackendLoading, stopBackendLoading } = useLoading();
   const { trackEvent } = useAnalytics();

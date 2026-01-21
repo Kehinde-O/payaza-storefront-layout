@@ -17,7 +17,7 @@ if (typeof window !== 'undefined') {
         speed: 500
     });
 }
-const LoadingContext = createContext(undefined);
+export const LoadingContext = createContext(undefined);
 export function LoadingProvider({ children }) {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingActions, setLoadingActions] = useState(new Set());
@@ -37,6 +37,7 @@ export function LoadingProvider({ children }) {
     const loadingTimeoutRef = useRef(null);
     const previousPathnameRef = useRef(null);
     const skeletonTimeoutRef = useRef(null);
+    const nprogressTimeoutRef = useRef(null);
     // Use content detection to determine when page content is ready
     const { isContentReady } = useContentReady({
         pathname: targetPathname || pathname,
@@ -86,18 +87,29 @@ export function LoadingProvider({ children }) {
             if (skeletonTimeoutRef.current) {
                 clearTimeout(skeletonTimeoutRef.current);
             }
+            if (nprogressTimeoutRef.current) {
+                clearTimeout(nprogressTimeoutRef.current);
+            }
         };
     }, [pathname, searchParams?.toString()]);
     const setLoading = useCallback((loading) => {
         setIsLoading(loading);
         if (typeof window !== 'undefined') {
             if (loading) {
+                if (nprogressTimeoutRef.current) {
+                    clearTimeout(nprogressTimeoutRef.current);
+                    nprogressTimeoutRef.current = null;
+                }
                 NProgress.start();
             }
             else {
                 // Small delay to ensure smooth transition
-                setTimeout(() => {
+                if (nprogressTimeoutRef.current) {
+                    clearTimeout(nprogressTimeoutRef.current);
+                }
+                nprogressTimeoutRef.current = setTimeout(() => {
                     NProgress.done();
+                    nprogressTimeoutRef.current = null;
                 }, 100);
             }
         }

@@ -4,6 +4,6 @@ interface ServicesPageProps {
     initialCategory?: string;
     titleOverride?: string;
 }
-export declare function ServicesPage({ storeConfig, initialCategory, titleOverride }: ServicesPageProps): import("react/jsx-runtime").JSX.Element;
+export declare function ServicesPage({ storeConfig: initialConfig, initialCategory, titleOverride }: ServicesPageProps): import("react/jsx-runtime").JSX.Element;
 export {};
 //# sourceMappingURL=ServicesPage.d.ts.map
